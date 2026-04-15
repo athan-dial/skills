@@ -5,7 +5,7 @@ Lightweight orchestration system for [Claude Code](https://docs.anthropic.com/en
 ## Install
 
 ```bash
-npx skills add fl65inc/orc -g -y
+claude plugin install athan-dial/skills:orc
 ```
 
 This auto-discovers all 7 skills and installs them as a plugin with cross-agent support (Claude Code, Codex, Cursor, Gemini CLI, and others).
