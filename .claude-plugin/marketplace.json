@@ -1,0 +1,7 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/marketplace.json",
+  "name": "athan-dial/skills",
+  "description": "Athan Dial's Claude Code skills — orchestration, manuscript pipelines, and more.",
+  "owner": "athan-dial",
+  "plugins": []
+}
