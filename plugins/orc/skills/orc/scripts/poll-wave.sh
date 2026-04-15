@@ -203,18 +203,20 @@ is_terminal() {
 }
 
 # ── ANSI colors ──────────────────────────────────────────────────────────────
+# 256-color palette matched to orc-backlog / orc-status renderers.
+# Softer reds/ambers; unified grey hierarchy.
 C_RESET="\033[0m"
 C_BOLD="\033[1m"
 C_DIM="\033[2m"
-C_GREEN="\033[32m"
-C_YELLOW="\033[33m"
-C_RED="\033[31m"
-C_CYAN="\033[36m"
-C_MAGENTA="\033[35m"
-C_WHITE="\033[97m"
-C_BG_GREEN="\033[42m"
-C_BG_YELLOW="\033[43m"
-C_BG_RED="\033[41m"
+C_GREEN="\033[38;5;108m"      # soft sage green — "active/done"
+C_YELLOW="\033[38;5;214m"     # warm amber — "in flight / waiting"
+C_RED="\033[38;5;203m"        # soft red — "failed"
+C_CYAN="\033[38;5;110m"       # subdued blue — identifiers
+C_MAGENTA="\033[38;5;175m"    # soft magenta — codex agent
+C_WHITE="\033[38;5;253m"      # near-white — primary content
+C_BG_GREEN="\033[48;5;108m"
+C_BG_YELLOW="\033[48;5;214m"
+C_BG_RED="\033[48;5;203m"
 
 # ── display helpers ──────────────────────────────────────────────────────────
 
