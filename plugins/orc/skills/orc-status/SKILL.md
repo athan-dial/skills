@@ -9,49 +9,51 @@ description: >
 
 # Orc: Status
 
-Delegate to `scripts/render-status.sh` — zero model tokens, streamed to the user's terminal:
+Render as a **markdown table** in your reply. Claude Code's UI renders markdown natively — don't use Unicode boxes, ANSI escapes, or custom width math. (This corrects an earlier misstep; see feedback_status_formatting.md.)
 
-```bash
-bash scripts/render-status.sh              # auto-detect repo root from CWD
-bash scripts/render-status.sh --root PATH  # override
-```
-
-The script reads four sources and renders a calm four-row dashboard:
+## What to read
 
 1. `.orc/state.json` — active orc:plan orchestration (wave, task counts, agent status)
 2. `var/autoresearch/*/session.json` — running autoresearch loops (iteration, metric, delta)
-3. `.orc/backlog/BACKLOG.jsonl` — open items with priority breakdown
-4. `git log -1` — last commit for context
+3. `.orc/backlog/BACKLOG.jsonl` — open items count + priority breakdown
+4. `git log -1 --format="%h %s (%cr)"` — last commit for context
 
-Example (active work):
+## Output format
 
-```
-  orc  ·  taxonomy-work
+```markdown
+**orc** · <repo-name>
 
-  ● plan           taxonomy-restructure                   wave 2/3 · 3 running
-  ● autoresearch   coverage-push                 iter 14/50 · 68.2% · (+2.3pp)
-  · backlog        3 open                                   1 p1 · 1 p2 · 1 p3
-  · last commit    feat: wire up the thing              bfbb0c2 · 1 second ago
+| System | Status | Detail |
+|---|---|---|
+| Plan | active | `taxonomy-restructure` — wave 2/3, 3 tasks running |
+| Autoresearch | active | `coverage-push` — iter 14/50, 68.2% (+2.3pp) |
+| Backlog | 4 open | 1 p1 · 2 p2 · 1 p3 |
+| Last commit | — | `ee97114` feat(orc-backlog): minimal TUI · 5m ago |
 
-  /orc:handoff  checkpoint state     /orc:recap  full briefing
-```
-
-Example (idle):
-
-```
-  orc  ·  skills
-
-  ○ plan           idle                                                      —
-  ○ autoresearch   idle                                                      —
-  · backlog        1 open                                   1 p2
-  · last commit    feat(orc-backlog): minimal TUI     ee97114 · 61 minutes ago
-
-  /orc:pick <id>  promote from backlog     /orc:scope  shape new work
+→ `/orc:handoff` checkpoint · `/orc:recap` full briefing
 ```
 
-Design rules (matches `orc:backlog` TUI language):
-- **State dot** (●/○/·) as leftmost signal: green `●` = active work, dim `○` = idle capacity, grey `·` = passive info, red `●` = failed.
-- **Content bright, metadata dim.** Label column is dim; content (slug, commit subject, count) is near-white; delta/time is dim grey.
-- **No frame.** Whitespace + palette do the structuring.
-- **Context-aware footer hint** — suggests next move based on active state (checkpoint vs promote vs shape).
-- Adaptive width (clamped 60–120), respects `NO_COLOR=1`.
+### Status column conventions
+
+- **active** (bold) — work in flight
+- **idle** (plain) — system is present but nothing running
+- **N open** — backlog count
+- **failed** (bold) — needs attention
+- `—` (em-dash) — not applicable (e.g., no active work for commits)
+
+### Footer hints (context-aware)
+
+- Work in flight → `/orc:handoff` checkpoint · `/orc:recap` full briefing
+- Idle with backlog → `/orc:pick <id>` promote · `/orc:scope` shape new work
+- Totally idle → `/orc:scope` shape new work · `/orc:add <idea>` capture for later
+
+### Empty / absent states
+
+- No `.orc/` directory → `Backlog is not initialized. Capture an idea with \`/orc add <idea>\`.`
+- No git history → omit the Last commit row entirely
+
+## Design principle
+
+Markdown tables are theme-aware, alignment-handled, copy-friendly. Reserve custom ANSI TUI
+(like `poll-wave.sh`) for **live-updating** regions where markdown can't animate. For a
+one-shot dashboard, markdown is always the right answer.

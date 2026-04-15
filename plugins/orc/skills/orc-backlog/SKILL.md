@@ -17,7 +17,7 @@ Capture ideas mid-session with rich context. Triage and promote to `/orchestrate
 ## Commands
 
 - `/orc add [idea]` — Capture an idea with context from current session
-- `/orc list` — Show backlog summary table (id, title, priority, tags, age)
+- `/orc list` — Show backlog as a markdown table (renders natively in Claude Code UI)
 - `/orc triage` — Interactive: review items, re-prioritize, archive stale ones
 - `/orc pick [id]` — Load an item's full context and promote to `/orchestrate`
 - `/orc drop [id]` — Archive an item (moves to `.orc/backlog/archive/`)
@@ -30,8 +30,7 @@ Capture ideas mid-session with rich context. Triage and promote to `/orchestrate
 │   ├── BACKLOG.jsonl       # Index: one JSON line per item
 │   ├── items/
 │   │   ├── 001-cache-layer.md
-│   │   ├── 002-multi-target-brief.md
-│   │   └── 003-org-ror-seed.md
+│   │   └── 002-multi-target-brief.md
 │   └── archive/            # Dropped/completed items
 └── state.json              # Active orchestration state (from /orchestrate-handoff)
 ```
@@ -97,57 +96,54 @@ Claude assigns priority based on conversation context. User can override during 
 
 ## /orc list
 
-Delegate to `scripts/list-backlog.sh` — it reads `.orc/backlog/BACKLOG.jsonl`, renders a
-framed Unicode dashboard with ANSI color (priority badges, relative age, tag chips, next-id
-hint), and auto-detects the backlog root by walking up from CWD. Zero model tokens consumed
-during render — the harness streams the script's stdout directly.
+**Render as a markdown table in your reply.** Claude Code's UI renders markdown natively — column alignment, monospace, theme-aware color are all handled by the harness. Do NOT use Unicode box-drawing, ANSI escapes, or custom width math — those misalign across fonts/widths and fight the UI.
 
-```bash
-bash scripts/list-backlog.sh              # open items (default)
-bash scripts/list-backlog.sh --all        # open + archived sections
-bash scripts/list-backlog.sh --archived   # archived only
-bash scripts/list-backlog.sh --compact    # tab-separated, pipe-friendly
-bash scripts/list-backlog.sh --root PATH  # override backlog location
+### Procedure
+
+1. Read `.orc/backlog/BACKLOG.jsonl` (walk up from CWD to find `.orc/backlog/`)
+2. Filter: open items by default; add `--archived` or `--all` sections if asked
+3. Sort by priority (p1 → p2 → p3), then by id
+4. Emit exactly this structure:
+
+```markdown
+| # | P | Title | Tags | Age |
+|---|---|-------|------|-----|
+| 001 | **p1** | Add Redis cache layer for hot paths | performance · infra | 2d |
+| 002 | **p1** | Migrate auth middleware to OAuth2 | auth · security | 5d |
+| 003 | p2 | Seed org synonyms from ROR | catalog · org-er | 1w |
+| 004 | p2 | Add p95 latency dashboard | observability | 2w |
+| 005 | p3 | Document Q4 retro learnings | meta | 3w |
+
+→ `/orc pick <id>` promote · `/orc drop <id>` archive · next id **006**
 ```
 
-Example output (8 items, auto-grouped by priority):
+Formatting rules:
+- **IDs** as plain 3-digit strings (`001`, not `1`)
+- **Priority column**: bold p1 (`**p1**`), plain p2, italic p3 (`*p3*`) for a subtle hierarchy
+- **Tags** joined with ` · ` (middle dot + spaces) — reads cleaner than commas in a table cell
+- **Age** as relative string: `today`, `Nd`, `Nw`, `Nmo`, `Ny`
+- **Footer line** below the table with the next-id hint, separated from the table by a blank line
 
-```
-  Backlog · 8 open
+If more than ~15 items, split into subtables by priority with H3 headers (`### High`, `### Medium`, `### Low`).
 
-  HIGH
-  ● 001  Add Redis cache layer for hot paths             performance · infra  2d
-  ● 002  Migrate auth middleware to OAuth2 with PKCE         auth · security  5d
+### Empty state
 
-  MEDIUM
-  ● 003  Seed org synonyms from ROR                         catalog · org-er  1w
-  ● 004  Rewrite the deployment runbook                           docs · ops  1w
-  ● 005  Add p95 latency graph to dashboard                    observability  2w
+Don't render an empty table. Say:
 
-  LOW
-  ○ 006  Document Q4 retro learnings                                    meta  3w
-  ○ 007  Explore switching CI to Dagger                    ci · exploration  2mo
-  ○ 008  Buy that bonsai for the office                                      4mo
-
-  /orc pick <id>  promote to plan    /orc drop <id>  archive    next id 009
+```markdown
+Backlog is empty. Capture an idea with `/orc add <short description>`.
 ```
 
-Design rules:
-- **Priority dot** (●/○) is the leftmost scannable signal: p1 bold red, p2 amber, p3 dim ring.
-- **Title is the only bright text.** ID, tags, age are all dim greys so the eye lands on content.
-- **Auto-grouping** (HIGH/MEDIUM/LOW) kicks in at >6 items; below that, a flat list feels cleaner.
-- **No frame.** Whitespace and subtle color separate sections; box drawing adds noise without info.
-- **Dynamic title truncation** — clips only when terminal actually can't fit the string.
-- Tags as dim `·`-separated chips; age dim and right-aligned.
-- Empty state welcomes and prompts: `Backlog is empty  —  /orc add <idea>`.
-- Respects `NO_COLOR=1`. Adapts to `$COLUMNS` (clamped 60–120).
+### Helper: compact machine-readable output
+
+For piping/scripting use, `scripts/list-backlog.sh --compact` emits tab-separated `id\tpriority\ttitle`. Not for human consumption — use the markdown table above for any interactive view.
 
 ## /orc triage
 
 Interactive review of open items:
 
-1. Display the list
-2. For each item (or user-selected subset), ask: keep/reprioritize/drop/promote
+1. Display the list as a markdown table (same format as `/orc list`)
+2. For each item (or user-selected subset), ask: keep / reprioritize / drop / promote
 3. **Promote** = generate an `/orchestrate` prompt from the item's context and copy to clipboard
 4. **Drop** = move to archive with reason
 
@@ -179,3 +175,4 @@ The bridge to `/orchestrate`:
 - **Rich context, lean index**: BACKLOG.jsonl is the fast scan; item markdown is the deep context.
 - **No framework lock-in**: Plain markdown + JSONL. Any agent can read it. No special tooling needed.
 - **Session-boundary resilient**: Everything on disk. New session reads `.orc/backlog/` and has full context.
+- **Markdown tables > box-drawing TUIs for static views.** The UI renders markdown natively; custom ANSI/Unicode fights it. Reserve shell-streamed TUI (like `poll-wave.sh`) for live-updating regions only.
