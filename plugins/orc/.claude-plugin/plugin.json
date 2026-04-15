@@ -2,5 +2,8 @@
   "name": "orc",
   "description": "Multi-agent orchestration across Codex, Cursor, and Claude subagents. Dependency-ordered wave-based task execution.",
   "version": "0.1.0",
-  "author": "athan-dial"
+  "author": {
+    "name": "Athan Dial",
+    "url": "https://github.com/athan-dial"
+  }
 }
