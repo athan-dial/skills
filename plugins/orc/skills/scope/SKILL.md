@@ -3,15 +3,15 @@ name: scope
 description: >
   Shape a backlog item or freeform idea into a scoped plan file before executing.
   Interactive: reads item context, explores relevant codebase, asks 1-2 clarifying questions,
-  writes .orc/plans/<slug>.md that orc:plan can consume directly.
+  writes .orc/plans/<slug>.md that orc:orchestrate can consume directly.
   Use when: "orc scope", "orc:scope", "scope this", "shape this idea", "plan before executing",
-  "break this down", or when the user wants to refine an idea before committing to orc:plan.
-  Part of the orc system: orc:plan, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
+  "break this down", or when the user wants to refine an idea before committing to orc:orchestrate.
+  Part of the orc system: orc:orchestrate, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
 ---
 
 # Orc: Scope
 
-Bridge between a backlog item and orc:plan execution. Refine scope interactively before committing.
+Bridge between a backlog item and orc:orchestrate execution. Refine scope interactively before committing.
 
 ## Input
 
@@ -56,13 +56,13 @@ Guard: <command>
 
 ## State delta since capture
 
-<What changed in the codebase since the backlog item was created — helps orc:plan adjust>
+<What changed in the codebase since the backlog item was created — helps orc:orchestrate adjust>
 ```
 
 ## After scoping
 
 Offer two choices:
-1. **Execute now** — invoke `orc:plan .orc/plans/<slug>.md`
+1. **Execute now** — invoke `orc:orchestrate .orc/plans/<slug>.md`
 2. **Save for later** — keep the plan file, return to conversation
 
 If the item came from backlog, update its status in BACKLOG.jsonl to `"scoped"`.

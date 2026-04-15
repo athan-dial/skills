@@ -3,12 +3,12 @@ name: orchestrate
 description: >
   Multi-agent orchestration — break complex work into parallel sub-tasks dispatched to Cursor,
   Codex, or Claude subagents. Use when a task has multiple independent sub-parts that benefit
-  from parallel agent execution. Triggered by /orc:plan, "orc plan", /orchestrate,
+  from parallel agent execution. Triggered by /orc:orchestrate, "orc orchestrate", /orchestrate,
   /orchestrate path/to/plan.md, "orchestrate this", "execute this plan with agents",
   "break this down and run it", "run these in parallel", "dispatch this work",
   or any request with 2+ independent sub-parts.
   Works with any markdown plan file, .orc/plans/ scoped plan, or freeform request.
-  Part of the orc system: orc:plan, orc:add, orc:list, orc:pick, orc:scope, orc:autoresearch, orc:status, orc:recap, orc:handoff.
+  Part of the orc system: orc:orchestrate, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
 ---
 
 # Orc: Plan
@@ -136,7 +136,7 @@ export ORCH_NOTES="<recent reroutes, blockers, decisions>"
 bash ~/.claude/skills/orchestrate-handoff/scripts/checkpoint.sh
 ```
 
-Writes `<repo>/.orchestrate/{state.json,HANDOFF.md}`. Idempotent. If you sense a usage limit is imminent, run `prepare-handoff.sh cursor` or `prepare-handoff.sh codex` for a paste-ready resume prompt.
+Writes `<repo>/.orc/{state.json,HANDOFF.md}`. Idempotent. If you sense a usage limit is imminent, run `prepare-handoff.sh cursor` or `prepare-handoff.sh codex` for a paste-ready resume prompt.
 
 ## Phase 3: Complete
 

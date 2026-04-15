@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # orchestrate-handoff: prepare-handoff
-# Emits a paste-ready resume prompt for cursor or codex, based on .orchestrate/state.json.
+# Emits a paste-ready resume prompt for cursor or codex, based on .orc/state.json.
 # Usage: prepare-handoff.sh [cursor|codex]
 
 set -u
 
 TARGET="${1:-cursor}"
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-STATE="$REPO_ROOT/.orchestrate/state.json"
-HANDOFF="$REPO_ROOT/.orchestrate/HANDOFF.md"
+STATE="$REPO_ROOT/.orc/state.json"
+HANDOFF="$REPO_ROOT/.orc/HANDOFF.md"
 
 if [ ! -f "$STATE" ]; then
   echo "ERROR: $STATE not found. Run checkpoint.sh first." >&2

@@ -5,8 +5,8 @@
 set -u
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-STATE="$REPO_ROOT/.orchestrate/state.json"
-HANDOFF="$REPO_ROOT/.orchestrate/HANDOFF.md"
+STATE="$REPO_ROOT/.orc/state.json"
+HANDOFF="$REPO_ROOT/.orc/HANDOFF.md"
 POLLER="$HOME/.claude/skills/orchestrate/scripts/poll-wave.sh"
 
 if [ ! -f "$STATE" ]; then

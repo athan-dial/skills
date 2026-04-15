@@ -7,7 +7,7 @@ description: >
   and ratcheting gains via git. Use when: "orc:autoresearch", "autoresearch", "optimize X metric",
   "iterate until X improves", "hill-climb", "run the loop", "autoresearch on [target]",
   or when the user wants autonomous iterative improvement of a scalar metric.
-  Part of the orc system: orc:plan, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
+  Part of the orc system: orc:orchestrate, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
 ---
 
 # Orc: Autoresearch

@@ -30,7 +30,7 @@ echo "Installed $(ls -d "$SKILLS_DIR"/orc* 2>/dev/null | wc -l | tr -d ' ') orc 
 echo "Start a new Claude Code session to pick them up."
 echo ""
 echo "Available commands:"
-echo "  orc:plan           Multi-agent execution"
+echo "  orc:orchestrate    Multi-agent execution"
 echo "  orc:backlog        add/list/triage/pick/drop"
 echo "  orc:autoresearch   Autonomous metric optimization"
 echo "  orc:scope          Shape idea into plan"

@@ -4,7 +4,7 @@ description: >
   Single-pane view of all orc system activity: active orchestration, running autoresearch loops,
   backlog count, last commit. Use when: "orc status", "orc:status", "what's running",
   "what's the state", "show me orc", or at session start to orient.
-  Part of the orc system: orc:plan, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
+  Part of the orc system: orc:orchestrate, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
 ---
 
 # Orc: Status
@@ -13,7 +13,7 @@ Render as a **markdown table** in your reply. Claude Code's UI renders markdown 
 
 ## What to read
 
-1. `.orc/state.json` — active orc:plan orchestration (wave, task counts, agent status)
+1. `.orc/state.json` — active orc:orchestrate orchestration (wave, task counts, agent status)
 2. `var/autoresearch/*/session.json` — running autoresearch loops (iteration, metric, delta)
 3. `.orc/backlog/BACKLOG.jsonl` — open items count + priority breakdown
 4. `git log -1 --format="%h %s (%cr)"` — last commit for context

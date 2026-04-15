@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Interactive picker shown in the auto-spawned cmux pane.
-# Reads $1 = repo path containing .orchestrate/AUTO-RESUME.txt
+# Reads $1 = repo path containing .orc/AUTO-RESUME.txt
 
 set -u
 REPO="${1:-$PWD}"
-PROMPT_FILE="$REPO/.orchestrate/AUTO-RESUME.txt"
-HANDOFF="$REPO/.orchestrate/HANDOFF.md"
+PROMPT_FILE="$REPO/.orc/AUTO-RESUME.txt"
+HANDOFF="$REPO/.orc/HANDOFF.md"
 
 clear
 cat <<EOF

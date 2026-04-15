@@ -2,12 +2,12 @@
 name: backlog
 description: >
   Lightweight backlog for the orc system. Capture ideas with rich context mid-session,
-  triage later, promote to orc:plan tasks. Lives at .orc/backlog/ in the repo.
+  triage later, promote to orc:orchestrate tasks. Lives at .orc/backlog/ in the repo.
   Use when: "add to backlog", "orc add", "orc:add", "backlog this", "save this idea",
   "park this for later", "orc list", "orc:list", "orc triage", "orc:triage",
   "orc pick", "orc:pick", "what's in the backlog", "show me the backlog",
   or when the user ideates something worth capturing for a future session.
-  Part of the orc system: orc:plan, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
+  Part of the orc system: orc:orchestrate, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
 ---
 
 # Orc: Backlog

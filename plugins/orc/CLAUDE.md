@@ -6,7 +6,7 @@ Lightweight orchestration system for Claude Code. Skills live in `skills/`, inst
 
 ```
 skills/
-  orc/              orc:plan — multi-agent execution (Cursor/Codex/Claude)
+  orc/              orc:orchestrate — multi-agent execution (Cursor/Codex/Claude)
   orc-backlog/      orc:backlog — idea capture + triage + promote
   orc-autoresearch/ orc:autoresearch — autonomous metric optimization loops
   orc-scope/        orc:scope — shape idea into executable plan

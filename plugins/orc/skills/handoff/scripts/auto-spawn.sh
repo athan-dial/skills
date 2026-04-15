@@ -17,7 +17,7 @@ SEARCH_ROOTS=(
 STATE_FILES=""
 for root in "${SEARCH_ROOTS[@]}"; do
   [ -d "$root" ] || continue
-  found=$(find "$root" -maxdepth 5 -path '*/.orchestrate/state.json' -mmin -60 2>/dev/null)
+  found=$(find "$root" -maxdepth 5 -path '*/.orc/state.json' -mmin -60 2>/dev/null)
   [ -n "$found" ] && STATE_FILES="$STATE_FILES"$'\n'"$found"
 done
 STATE_FILES=$(echo "$STATE_FILES" | awk 'NF>0')
@@ -35,7 +35,7 @@ while IFS= read -r STATE; do
 
   # Build the resume prompt (codex-flavored; chooser can re-target)
   PROMPT=$( cd "$REPO" && bash ~/.claude/skills/orchestrate-handoff/scripts/prepare-handoff.sh codex 2>/dev/null )
-  echo "$PROMPT" > "$REPO/.orchestrate/AUTO-RESUME.txt"
+  echo "$PROMPT" > "$REPO/.orc/AUTO-RESUME.txt"
 
   # Spawn cmux split running the chooser
   CHOOSER="$HOME/.claude/skills/orchestrate-handoff/scripts/handoff-chooser.sh"

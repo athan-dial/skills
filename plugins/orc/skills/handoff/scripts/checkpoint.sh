@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # orchestrate-handoff: checkpoint
-# Writes .orchestrate/state.json + .orchestrate/HANDOFF.md from env vars + tasks.json.
+# Writes .orc/state.json + .orc/HANDOFF.md from env vars + tasks.json.
 # Idempotent. Safe to call any time. Latest checkpoint overwrites prior.
 
 set -u
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-DIR="$REPO_ROOT/.orchestrate"
+DIR="$REPO_ROOT/.orc"
 mkdir -p "$DIR"
 
-# Ensure .gitignore covers .orchestrate/
+# Ensure .gitignore covers .orc/
 GITIGNORE="$REPO_ROOT/.gitignore"
 if [ -f "$GITIGNORE" ]; then
-  grep -qxF '.orchestrate/' "$GITIGNORE" || echo '.orchestrate/' >> "$GITIGNORE"
+  grep -qxF '.orc/' "$GITIGNORE" || echo '.orc/' >> "$GITIGNORE"
 else
-  echo '.orchestrate/' > "$GITIGNORE"
+  echo '.orc/' > "$GITIGNORE"
 fi
 
 NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"

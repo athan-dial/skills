@@ -6,6 +6,12 @@ All notable changes to the `orc` plugin are documented here. Format follows [Kee
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-04-15
+
+### Changed
+- Internal: unified handoff state directory on `.orc/` (was `.orchestrate/`). All handoff artifacts (`HANDOFF.md`, `state.json`, `AUTO-RESUME.txt`, `tasks.json`) now live alongside `.orc/backlog/` and `.orc/plans/` in a single per-repo state dir. Updated `handoff/` scripts and `SKILL.md` accordingly. Existing `.orchestrate/` dirs in user repos are not auto-migrated — `checkpoint.sh` will simply start writing to `.orc/` next run.
+- Refreshed stale `orc:plan` references to `orc:orchestrate` across SKILL.md frontmatter descriptions (all seven skills), `install.sh` banner, `CLAUDE.md`, and the `orchestrate/` prose that still pointed at the pre-0.2 command name. Also corrected `orchestrate/SKILL.md`'s "Part of the orc system" line which still listed the pre-consolidation names `orc:add / orc:list / orc:pick` (rolled into `orc:backlog` in 0.1.0).
+
 ## [0.3.0] — 2026-04-15
 
 ### Added

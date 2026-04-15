@@ -1,14 +1,14 @@
 ---
 name: handoff
 description: >
-  Persist and resume orc:plan state to disk. ONLY invoke when: (1) the user explicitly says
+  Persist and resume orc:orchestrate state to disk. ONLY invoke when: (1) the user explicitly says
   /orc:handoff, "checkpoint orchestration", "hand off", "resume orchestration",
   or "save orc state"; (2) CC displays an actual system usage-limit warning (not your
-  guess that one is coming); (3) orc:plan auto-calls checkpoint after a wave completes;
+  guess that one is coming); (3) orc:orchestrate auto-calls checkpoint after a wave completes;
   (4) a fresh session needs to resume a prior orchestration via `resume`. Do NOT invoke because
   a session feels long, context feels large, or you think limits might be near. "Session is long"
   is never a trigger.
-  Part of the orc system: orc:plan, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
+  Part of the orc system: orc:orchestrate, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
 ---
 
 # Orchestrate Handoff
@@ -39,13 +39,13 @@ This skill writes orchestrator state to disk after every wave so any agent (CC, 
 
 ## State location
 
-**Repo-local: `<repo-root>/.orchestrate/`** — gitignored, follows the work, no global discovery step needed. Files:
+**Repo-local: `<repo-root>/.orc/`** — gitignored, follows the work, no global discovery step needed. Files:
 
 - `state.json` — structured task table, wave history, in-flight jobs, routing context paths
 - `HANDOFF.md` — human-readable narrative with paste-ready resume prompts for Cursor/Codex
 - `tasks.json` — last TaskList snapshot (orchestrator pipes this in before checkpoint)
 
-Add `.orchestrate/` to `.gitignore` on first checkpoint if missing.
+Add `.orc/` to `.gitignore` on first checkpoint if missing.
 
 ## Mode 1: `checkpoint`
 
@@ -67,10 +67,10 @@ The script reads from environment variables. The orchestrator MUST export these 
 | `ORCH_NEXT_ACTION` | One-line description of next step |
 | `ORCH_NOTES` | Optional: open decisions, blockers, recent reroutes |
 
-For task table: orchestrator can optionally write `.orchestrate/tasks.json` (e.g., echoing TaskList output as JSON) before invoking the script. If absent, checkpoint still runs but state.json's task table will be empty.
+For task table: orchestrator can optionally write `.orc/tasks.json` (e.g., echoing TaskList output as JSON) before invoking the script. If absent, checkpoint still runs but state.json's task table will be empty.
 
 **What the script does:**
-1. Creates `.orchestrate/` if missing, adds entry to repo `.gitignore`
+1. Creates `.orc/` if missing, adds entry to repo `.gitignore`
 2. Writes `state.json` from env vars + `tasks.json` (if present) + ISO timestamp
 3. Renders `HANDOFF.md` with current state and paste-ready Cursor/Codex resume prompts
 4. Echoes the path to `HANDOFF.md`
@@ -93,11 +93,11 @@ Both targets read the existing `state.json` and `HANDOFF.md` (call `checkpoint.s
 
 **Cursor target:** prints a complete prompt to paste into Cursor agent mode. The prompt:
 - Names the absolute repo path
-- Tells Cursor to read `.orchestrate/HANDOFF.md` and `.orchestrate/state.json`
+- Tells Cursor to read `.orc/HANDOFF.md` and `.orc/state.json`
 - Instructs Cursor to invoke `resume.sh`
 - Emphasizes that Codex/Cursor worker daemons may still be running
 
-**Codex target:** prints a `codex-rescue` agent prompt. Codex-rescue already knows the runtime — the prompt just declares "this is a resume, not a fresh start; load `.orchestrate/HANDOFF.md` first."
+**Codex target:** prints a `codex-rescue` agent prompt. Codex-rescue already knows the runtime — the prompt just declares "this is a resume, not a fresh start; load `.orc/HANDOFF.md` first."
 
 ## Mode 3: `resume`
 
