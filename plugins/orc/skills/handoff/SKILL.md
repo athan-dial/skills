@@ -1,5 +1,5 @@
 ---
-name: orc:handoff
+name: handoff
 description: >
   Persist and resume orc:plan state to disk. ONLY invoke when: (1) the user explicitly says
   /orc:handoff, "checkpoint orchestration", "hand off", "resume orchestration",

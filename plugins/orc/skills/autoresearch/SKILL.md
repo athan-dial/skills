@@ -1,5 +1,5 @@
 ---
-name: orc:autoresearch
+name: autoresearch
 description: >
   Autonomous optimization loop inspired by Karpathy's autoresearch pattern.
   Iteratively improve any measurable codebase metric (coverage, latency, accuracy, test pass rate)

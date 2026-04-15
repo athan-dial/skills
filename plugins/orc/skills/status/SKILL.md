@@ -1,5 +1,5 @@
 ---
-name: orc:status
+name: status
 description: >
   Single-pane view of all orc system activity: active orchestration, running autoresearch loops,
   backlog count, last commit. Use when: "orc status", "orc:status", "what's running",

@@ -1,5 +1,5 @@
 ---
-name: orc:recap
+name: recap
 description: >
   Session-start briefing from disk state. Synthesizes what happened last session, what's in the
   backlog, and suggests what to work on next. Designed for cold-start: paste /orc:recap as first

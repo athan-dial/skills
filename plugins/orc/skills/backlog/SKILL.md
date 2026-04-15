@@ -1,5 +1,5 @@
 ---
-name: orc:backlog
+name: backlog
 description: >
   Lightweight backlog for the orc system. Capture ideas with rich context mid-session,
   triage later, promote to orc:plan tasks. Lives at .orc/backlog/ in the repo.

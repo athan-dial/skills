@@ -1,5 +1,5 @@
 ---
-name: orc:scope
+name: scope
 description: >
   Shape a backlog item or freeform idea into a scoped plan file before executing.
   Interactive: reads item context, explores relevant codebase, asks 1-2 clarifying questions,
