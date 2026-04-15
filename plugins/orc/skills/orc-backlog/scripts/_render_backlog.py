@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
-"""Render backlog as a framed Unicode dashboard with ANSI color.
+"""Render backlog as a clean, minimal TUI.
+
+Design philosophy:
+  - No frame. A box only pays off for very long lists; otherwise it's visual noise.
+  - Information hierarchy through color, not weight. Title is the only bright text;
+    everything else (id, priority label, tags, age) is dim so the eye lands on content.
+  - Priority as a colored dot (●/○) on the leftmost column — scannable in peripheral vision.
+  - Priority grouping only when the list is long enough to benefit from it (>6 items).
+  - Tags as dim `·`-separated chips, right-sized to the actual content.
+  - Age dim and right-aligned.
+  - Dynamic title truncation — only clips when the terminal actually can't fit it.
+  - Helpful, calm empty states instead of apologetic "(empty)".
 
 Invoked by list-backlog.sh. Env:
   MODE    = open | archived | all
@@ -10,6 +21,7 @@ Invoked by list-backlog.sh. Env:
 from __future__ import annotations
 import json
 import os
+import shutil
 import sys
 from datetime import date, datetime
 from pathlib import Path
@@ -25,22 +37,25 @@ WIDTH = max(60, min(WIDTH, 120))
 
 USE_COLOR = sys.stdout.isatty() and not os.environ.get("NO_COLOR") and not COMPACT
 
-C = {
-    "reset": "\033[0m" if USE_COLOR else "",
-    "dim":   "\033[2m" if USE_COLOR else "",
-    "bold":  "\033[1m" if USE_COLOR else "",
-    "red":   "\033[31m" if USE_COLOR else "",
-    "yel":   "\033[33m" if USE_COLOR else "",
-    "grn":   "\033[32m" if USE_COLOR else "",
-    "cya":   "\033[36m" if USE_COLOR else "",
-    "mag":   "\033[35m" if USE_COLOR else "",
-}
+# ── palette ───────────────────────────────────────────────────────────────────
+def _c(code: str) -> str:
+    return code if USE_COLOR else ""
+
+RESET = _c("\033[0m")
+DIM = _c("\033[2m")
+BOLD = _c("\033[1m")
+RED = _c("\033[38;5;203m")       # p1 — soft red, not fire-engine
+YEL = _c("\033[38;5;214m")       # p2 — warm amber
+BLU = _c("\033[38;5;110m")       # IDs — subdued blue
+TITLE = _c("\033[38;5;253m")     # titles — near-white
+META = _c("\033[38;5;244m")      # metadata (tags, age) — mid-grey
+FAINT = _c("\033[38;5;240m")     # separators, captions — dark grey
 
 ARCHIVED_STATUSES = {"archived", "dropped", "promoted", "done"}
+GROUP_THRESHOLD = 6  # group-by-priority headers only if more items than this
 
-
+# ── data ──────────────────────────────────────────────────────────────────────
 def load_items() -> tuple[list[dict], list[dict]]:
-    """Return (open_items, archived_items)."""
     idx = ROOT / "BACKLOG.jsonl"
     openi: list[dict] = []
     arch: list[dict] = []
@@ -53,11 +68,7 @@ def load_items() -> tuple[list[dict], list[dict]]:
                 obj = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if obj.get("status") in ARCHIVED_STATUSES:
-                arch.append(obj)
-            else:
-                openi.append(obj)
-    # Also pull from archive/*.jsonl
+            (arch if obj.get("status") in ARCHIVED_STATUSES else openi).append(obj)
     arch_dir = ROOT / "archive"
     if arch_dir.is_dir():
         for f in sorted(arch_dir.glob("*.jsonl")):
@@ -73,11 +84,11 @@ def load_items() -> tuple[list[dict], list[dict]]:
 
 def age_of(created: str) -> str:
     if not created:
-        return "?"
+        return ""
     try:
         d = datetime.strptime(created, "%Y-%m-%d").date()
     except ValueError:
-        return "?"
+        return ""
     days = (date.today() - d).days
     if days <= 0:   return "today"
     if days == 1:   return "1d"
@@ -87,29 +98,111 @@ def age_of(created: str) -> str:
     return f"{days//365}y"
 
 
-def prio_badge(p: str) -> tuple[str, int]:
-    """Return (colored_text, visible_width)."""
+def prio_dot(p: str) -> str:
+    """Single-glyph priority indicator. One char wide."""
     if p == "p1":
-        return f"{C['bold']}{C['red']}p1{C['reset']}", 2
+        return f"{BOLD}{RED}●{RESET}"
     if p == "p2":
-        return f"{C['bold']}{C['yel']}p2{C['reset']}", 2
+        return f"{YEL}●{RESET}"
     if p == "p3":
-        return f"{C['dim']}p3{C['reset']}", 2
-    return f"{C['dim']}??{C['reset']}", 2
+        return f"{FAINT}○{RESET}"
+    return f"{FAINT}·{RESET}"
 
 
-def trunc(s: str, n: int) -> str:
-    if n <= 0:
-        return ""
-    return s if len(s) <= n else s[: n - 1] + "…"
-
-
-def tags_str(tags) -> str:
+def tags_as_chips(tags) -> tuple[str, int]:
+    """Return (colored_chip_string, visible_width)."""
     if isinstance(tags, list):
-        return " ".join(str(t) for t in tags)
-    if isinstance(tags, str):
-        return tags
-    return ""
+        parts = [str(t) for t in tags if t]
+    elif isinstance(tags, str):
+        parts = tags.split()
+    else:
+        return "", 0
+    if not parts:
+        return "", 0
+    sep = f" {FAINT}·{RESET} "
+    sep_visible = 3  # " · "
+    visible = sum(len(p) for p in parts) + sep_visible * (len(parts) - 1)
+    colored = sep.join(f"{META}{p}{RESET}" for p in parts)
+    return colored, visible
+
+
+# ── layout ────────────────────────────────────────────────────────────────────
+def sort_by_priority(items: list[dict]) -> list[dict]:
+    order = {"p1": 0, "p2": 1, "p3": 2}
+    return sorted(
+        items,
+        key=lambda it: (order.get(it.get("priority", ""), 3), str(it.get("id", ""))),
+    )
+
+
+def priority_label(p: str) -> str:
+    return {"p1": "HIGH", "p2": "MEDIUM", "p3": "LOW"}.get(p, "OTHER")
+
+
+def render_item(it: dict) -> None:
+    """Render one item row. Visual budget: 2 + 1 + 2 + 4 + 2 + title + 2 + tags + 2 + age."""
+    dot = prio_dot(it.get("priority", ""))
+    iid = str(it.get("id", "?")).rjust(3)[:3]
+    title = str(it.get("title", "")).strip()
+    age = age_of(it.get("created", ""))
+    chips, chips_w = tags_as_chips(it.get("tags", []))
+
+    # Fixed-width pieces (visible widths)
+    # "  ● " = 4, "001 " = 4, title, "  " gap, tags, "  " gap, age, trailing " "
+    left_w = 2 + 1 + 1 + 3 + 1  # indent + dot + space + id + space
+    right_w = len(age) + 1      # age + trailing space
+
+    # Tags + gap take up: 2 + chips_w (if any)
+    tags_budget = (2 + chips_w) if chips_w else 0
+
+    # Remaining room for title
+    title_room = WIDTH - left_w - tags_budget - right_w - 2  # - 2 for gap before age
+    if title_room < 10:
+        # Squeeze tags first
+        chips, chips_w = "", 0
+        tags_budget = 0
+        title_room = WIDTH - left_w - right_w - 2
+
+    if len(title) > title_room:
+        title = title[: max(1, title_room - 1)] + "…"
+
+    title_padded = title.ljust(title_room)
+
+    if chips_w:
+        # Fill any extra space between title and chips; then 2 spaces, chips, 2 spaces, age
+        chip_pad = title_room - len(title)  # already padded, so 0; we want chips right after
+        line = (
+            f"  {dot} {BLU}{iid}{RESET}  "
+            f"{TITLE}{title}{RESET}"
+            f"{' ' * chip_pad}  "
+            f"{chips}  "
+            f"{DIM}{YEL}{age}{RESET}"
+        )
+    else:
+        line = (
+            f"  {dot} {BLU}{iid}{RESET}  "
+            f"{TITLE}{title_padded}{RESET}  "
+            f"{DIM}{YEL}{age}{RESET}"
+        )
+    print(line)
+
+
+def render_group_header(label: str, first: bool = False) -> None:
+    if not first:
+        print()
+    print(f"  {FAINT}{label}{RESET}")
+
+
+def render_section_header(text: str, subtle: bool = False) -> None:
+    if subtle:
+        print(f"{FAINT}{text}{RESET}")
+    else:
+        print(f"{BOLD}{text}{RESET}")
+
+
+def render_rule() -> None:
+    # Thin dim rule, 24 chars
+    print(f"  {FAINT}{'─' * 24}{RESET}")
 
 
 def render_compact(items: list[dict]) -> None:
@@ -117,87 +210,109 @@ def render_compact(items: list[dict]) -> None:
         print(f"{it.get('id','')}\t{it.get('priority','')}\t{it.get('title','')}")
 
 
-def section(title: str, items: list[dict]) -> None:
-    inner = WIDTH - 2  # space between │ and │
-    # Columns
-    id_w = 4
-    prio_w = 2
-    age_w = 5
-    tag_w = min(max(14, inner // 4), 22)
-    gaps = 5  # gaps of 2 spaces between cols + leading space = adjusted below
-    # Layout: " id  prio  title…  age  tags "
-    #         leading 1 + id_w + 2 + prio_w + 2 + title_w + 2 + age_w + 2 + tag_w + trailing 1
-    fixed = 1 + id_w + 2 + prio_w + 2 + 2 + age_w + 2 + tag_w + 1
-    title_w = inner - fixed
-    if title_w < 12:
-        title_w = 12
-        tag_w = max(6, inner - (1 + id_w + 2 + prio_w + 2 + title_w + 2 + age_w + 2 + 1))
-
-    hdr_visible = f"{title} · {len(items)} item{'' if len(items)==1 else 's'}"
-    hdr_colored = f"{C['bold']}{title}{C['reset']}{C['dim']} · {len(items)} item{'' if len(items)==1 else 's'}{C['reset']}"
-    pad = inner - 3 - len(hdr_visible)  # 3 = "─ " + " "
-    if pad < 0:
-        pad = 0
-    print(f"{C['dim']}╭─ {C['reset']}{hdr_colored}{C['dim']} {'─' * pad}╮{C['reset']}")
-
-    if not items:
-        msg = "  (empty — /orc add <idea> to capture)"
-        print(f"{C['dim']}│{C['reset']}{C['dim']}{msg}{C['reset']}{' ' * (inner - len(msg))}{C['dim']}│{C['reset']}")
+def render_open_section(items: list[dict], show_groups: bool) -> None:
+    sorted_items = sort_by_priority(items)
+    if show_groups and len(items) > GROUP_THRESHOLD:
+        last_prio = None
+        first = True
+        for it in sorted_items:
+            p = it.get("priority", "")
+            if p != last_prio:
+                render_group_header(priority_label(p), first=first)
+                last_prio = p
+                first = False
+            render_item(it)
     else:
-        for it in items:
-            iid = str(it.get("id", "?"))[:id_w].ljust(id_w)
-            badge, badge_w = prio_badge(it.get("priority", ""))
-            ttl = trunc(it.get("title", ""), title_w).ljust(title_w)
-            age = age_of(it.get("created", "")).ljust(age_w)[:age_w]
-            tags = trunc(tags_str(it.get("tags", [])), tag_w).ljust(tag_w)
-
-            # Build visible and colored versions
-            colored = (
-                f" {iid}  {badge}  {ttl}  "
-                f"{C['yel']}{age}{C['reset']}  "
-                f"{C['dim']}{tags}{C['reset']} "
-            )
-            visible_len = 1 + id_w + 2 + badge_w + 2 + title_w + 2 + age_w + 2 + tag_w + 1
-            extra_pad = inner - visible_len
-            if extra_pad < 0:
-                extra_pad = 0
-            print(f"{C['dim']}│{C['reset']}{colored}{' ' * extra_pad}{C['dim']}│{C['reset']}")
-
-    print(f"{C['dim']}╰{'─' * inner}╯{C['reset']}")
+        for it in sorted_items:
+            render_item(it)
 
 
+def render_archived_section(items: list[dict]) -> None:
+    if not items:
+        return
+    print()
+    render_section_header("Archived", subtle=True)
+    for it in sort_by_priority(items):
+        render_item(it)
+
+
+def render_empty_state() -> None:
+    print()
+    print(f"  {BOLD}Backlog{RESET}{DIM} is empty{RESET}")
+    print()
+    print(f"  {FAINT}Capture an idea with{RESET}  {META}/orc add <short description>{RESET}")
+    print()
+
+
+def render_footer(next_id: str) -> None:
+    print()
+    print(
+        f"  {META}/orc pick{RESET}{FAINT} <id>  promote to plan    "
+        f"{META}/orc drop{RESET}{FAINT} <id>  archive    "
+        f"next id {META}{next_id}{RESET}"
+    )
+
+
+# ── main ──────────────────────────────────────────────────────────────────────
 def main() -> int:
     if not ROOT.exists():
-        print(f"{C['dim']}No backlog initialized at {ROOT}{C['reset']}")
-        print(f"{C['dim']}Run /orc add <idea> to start capturing.{C['reset']}")
+        print()
+        print(f"  {META}No backlog at {ROOT}{RESET}")
+        print(f"  {FAINT}/orc add <idea> to start capturing.{RESET}")
+        print()
         return 0
 
     openi, arch = load_items()
 
     if COMPACT:
-        if MODE == "open":      render_compact(openi)
+        if MODE == "open":       render_compact(openi)
         elif MODE == "archived": render_compact(arch)
         else:                    render_compact(openi + arch)
         return 0
 
-    if MODE == "open":
-        section("Backlog — open", openi)
-    elif MODE == "archived":
-        section("Backlog — archived", arch)
-    else:
-        section("Backlog — open", openi)
-        print()
-        section("Backlog — archived", arch)
+    # Empty check first — skip header for empty states
+    is_empty = (
+        (MODE == "open" and not openi)
+        or (MODE == "archived" and not arch)
+        or (MODE == "all" and not openi and not arch)
+    )
+    if is_empty:
+        render_empty_state()
+        return 0
 
-    # Footer hint
+    # Header
+    print()
+    if MODE == "archived":
+        hdr = f"Backlog {FAINT}·{RESET}{BOLD} {len(arch)} archived"
+    elif MODE == "all":
+        hdr = f"Backlog {FAINT}·{RESET}{BOLD} {len(openi)} open {FAINT}·{RESET}{BOLD} {len(arch)} archived"
+    else:
+        hdr = f"Backlog {FAINT}·{RESET}{BOLD} {len(openi)} open"
+    print(f"  {BOLD}{hdr}{RESET}")
+    print()
+
+    # Body
+    if MODE == "archived":
+        for it in sort_by_priority(arch):
+            render_item(it)
+    elif MODE == "all":
+        if openi:
+            render_open_section(openi, show_groups=True)
+        render_archived_section(arch)
+    else:  # open
+        render_open_section(openi, show_groups=True)
+
+    # Footer (only when there are actionable items)
     if MODE != "archived" and openi:
-        all_ids = [int(i.get("id", 0)) for i in openi + arch if str(i.get("id", "")).isdigit()]
+        all_ids = [
+            int(i.get("id", 0))
+            for i in openi + arch
+            if str(i.get("id", "")).isdigit()
+        ]
         next_id = f"{(max(all_ids) if all_ids else 0) + 1:03d}"
-        print(
-            f"{C['dim']}  /orc pick <id>  →  promote to plan     "
-            f"/orc drop <id>  →  archive     "
-            f"next id: {next_id}{C['reset']}"
-        )
+        render_footer(next_id)
+    else:
+        print()
     return 0
 
 

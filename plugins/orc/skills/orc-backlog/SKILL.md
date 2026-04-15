@@ -110,19 +110,37 @@ bash scripts/list-backlog.sh --compact    # tab-separated, pipe-friendly
 bash scripts/list-backlog.sh --root PATH  # override backlog location
 ```
 
-Example output:
+Example output (8 items, auto-grouped by priority):
 
 ```
-╭─ Backlog — open · 3 items ──────────────────────────────────────────────╮
-│ 001   p1  Add Redis cache layer                    2d   performance inf… │
-│ 002   p2  Migrate auth to OAuth2                   2d   auth security    │
-│ 003   p2  Seed org synonyms from ROR               2d   catalog org-er   │
-╰──────────────────────────────────────────────────────────────────────────╯
-  /orc pick <id>  →  promote to plan     /orc drop <id>  →  archive     next id: 004
+  Backlog · 8 open
+
+  HIGH
+  ● 001  Add Redis cache layer for hot paths             performance · infra  2d
+  ● 002  Migrate auth middleware to OAuth2 with PKCE         auth · security  5d
+
+  MEDIUM
+  ● 003  Seed org synonyms from ROR                         catalog · org-er  1w
+  ● 004  Rewrite the deployment runbook                           docs · ops  1w
+  ● 005  Add p95 latency graph to dashboard                    observability  2w
+
+  LOW
+  ○ 006  Document Q4 retro learnings                                    meta  3w
+  ○ 007  Explore switching CI to Dagger                    ci · exploration  2mo
+  ○ 008  Buy that bonsai for the office                                      4mo
+
+  /orc pick <id>  promote to plan    /orc drop <id>  archive    next id 009
 ```
 
-Priority color: p1=red bold, p2=yellow bold, p3=dim. Age is dim yellow. Tags are dim.
-Width adapts to terminal (clamped 60–120 cols). Respects `NO_COLOR=1`.
+Design rules:
+- **Priority dot** (●/○) is the leftmost scannable signal: p1 bold red, p2 amber, p3 dim ring.
+- **Title is the only bright text.** ID, tags, age are all dim greys so the eye lands on content.
+- **Auto-grouping** (HIGH/MEDIUM/LOW) kicks in at >6 items; below that, a flat list feels cleaner.
+- **No frame.** Whitespace and subtle color separate sections; box drawing adds noise without info.
+- **Dynamic title truncation** — clips only when terminal actually can't fit the string.
+- Tags as dim `·`-separated chips; age dim and right-aligned.
+- Empty state welcomes and prompts: `Backlog is empty  —  /orc add <idea>`.
+- Respects `NO_COLOR=1`. Adapts to `$COLUMNS` (clamped 60–120).
 
 ## /orc triage
 
