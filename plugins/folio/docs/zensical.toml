@@ -1,0 +1,66 @@
+[project]
+site_name = "Folio"
+site_url = ""
+docs_dir = "."
+site_dir = "site"
+
+extra_css = ["stylesheets/folio.css"]
+
+[project.extra]
+homepage = ""
+
+nav = [
+  { "Home" = "index.md" },
+  { "Guides" = [
+    { "Getting Started" = "guides/getting-started.md" },
+    { "Workflow Overview" = "guides/workflow-overview.md" },
+    { "Modes" = [
+      { "White Paper" = "guides/modes/white-paper.md" },
+      { "Research Paper" = "guides/modes/research-paper.md" },
+      { "Hybrid" = "guides/modes/hybrid.md" },
+    ]},
+  ]},
+  { "Reference" = [
+    { "Commands" = "reference/commands.md" },
+    { "Scripts" = "reference/scripts.md" },
+    { "Schemas" = "reference/schemas.md" },
+    { "Artifacts" = "reference/artifacts.md" },
+    { "Failure Modes" = "reference/failure-modes.md" },
+    { "IP Policy" = "reference/ip-policy.md" },
+  ]},
+]
+
+[project.theme]
+language = "en"
+
+features = [
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    "navigation.path",
+    "navigation.sections",
+    "navigation.top",
+    "navigation.tracking",
+    "content.code.copy",
+    "content.code.annotate",
+    "search.highlight",
+]
+
+[project.theme.font]
+text = "Libre Baskerville"
+code = "IBM Plex Mono"
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"

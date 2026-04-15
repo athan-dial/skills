@@ -29,4 +29,4 @@ The skill supports three modes: **white paper** (narrative / positioning), **res
 
 - Python scripts target 3.10+ with no external dependencies beyond stdlib.
 - `compile_package.sh` requires `pdflatex` and `bibtex` on PATH (optional — skill degrades gracefully).
-- Test with: `python scripts/validate_inputs.py workspace/` to check a workspace.
+- Test with: `cd plugins/folio && python scripts/validate_inputs.py workspace/` to check a workspace.

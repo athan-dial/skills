@@ -1,0 +1,356 @@
+/* Folio — Visual Identity
+   Research manuscript orchestration docs
+   Palette: warm parchment neutrals + deep ink primary + verdigris accent
+   ------------------------------------------------------------------ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+
+/* ================================================================
+   LIGHT MODE — "default"
+   ================================================================ */
+
+:root,
+[data-md-color-scheme="default"] {
+
+  /* --- Font stack --- */
+  --md-text-font:          "Libre Baskerville", "Georgia", serif;
+  --md-code-font:          "IBM Plex Mono", "Menlo", monospace;
+
+  /* --- Primary: deep iron-gall ink --- */
+  --md-primary-fg-color:         #2c2416;
+  --md-primary-fg-color--light:  #4a3c28;
+  --md-primary-fg-color--dark:   #16110a;
+  --md-primary-bg-color:         #faf7f2;
+  --md-primary-bg-color--light:  rgba(250, 247, 242, 0.82);
+
+  /* --- Accent: aged verdigris (patinated brass / oxidised copper) --- */
+  --md-accent-fg-color:              #4e7c6f;
+  --md-accent-fg-color--transparent: rgba(78, 124, 111, 0.12);
+  --md-accent-bg-color:              #eef4f2;
+  --md-accent-bg-color--light:       rgba(238, 244, 242, 0.60);
+
+  /* --- Default foreground text (warm charcoal, not cold grey) --- */
+  --md-default-fg-color:           #2c2416;
+  --md-default-fg-color--light:    rgba(44, 36, 22, 0.72);
+  --md-default-fg-color--lighter:  rgba(44, 36, 22, 0.48);
+  --md-default-fg-color--lightest: rgba(44, 36, 22, 0.16);
+
+  /* --- Default background surfaces (layered parchment) --- */
+  --md-default-bg-color:           #faf7f2;
+  --md-default-bg-color--light:    rgba(250, 247, 242, 0.74);
+  --md-default-bg-color--lighter:  rgba(250, 247, 242, 0.50);
+  --md-default-bg-color--lightest: rgba(250, 247, 242, 0.12);
+
+  /* --- Typeset body copy --- */
+  --md-typeset-color:               #2c2416;
+  --md-typeset-a-color:             #4e7c6f;
+  --md-typeset-mark-color:          rgba(78, 124, 111, 0.18);
+  --md-typeset-kbd-color:           #f3ede4;
+  --md-typeset-kbd-accent-color:    #d6ccbe;
+  --md-typeset-kbd-border-color:    #b8ad9e;
+  --md-typeset-table-color:         rgba(44, 36, 22, 0.06);
+
+  /* --- Code blocks --- */
+  --md-code-fg-color:               #2c2416;
+  --md-code-bg-color:               #f3ede4;
+  --md-code-hl-color:               rgba(78, 124, 111, 0.14);
+  --md-code-hl-number-color:        #9b5b3a;
+  --md-code-hl-special-color:       #6b4fa0;
+  --md-code-hl-function-color:      #3a6e8a;
+  --md-code-hl-constant-color:      #7a3f60;
+  --md-code-hl-keyword-color:       #4e7c6f;
+  --md-code-hl-string-color:        #6b7c3a;
+  --md-code-hl-name-color:          #2c2416;
+  --md-code-hl-operator-color:      rgba(44, 36, 22, 0.62);
+  --md-code-hl-punctuation-color:   rgba(44, 36, 22, 0.46);
+  --md-code-hl-comment-color:       rgba(44, 36, 22, 0.38);
+  --md-code-hl-generic-color:       rgba(44, 36, 22, 0.58);
+  --md-code-hl-variable-color:      rgba(44, 36, 22, 0.58);
+
+  /* --- Admonitions / callouts --- */
+  --md-admonition-fg-color:         rgba(44, 36, 22, 0.87);
+  --md-admonition-bg-color:         #faf7f2;
+
+  /* --- Footer --- */
+  --md-footer-fg-color:             rgba(250, 247, 242, 0.84);
+  --md-footer-fg-color--light:      rgba(250, 247, 242, 0.60);
+  --md-footer-fg-color--lighter:    rgba(250, 247, 242, 0.38);
+  --md-footer-bg-color:             #2c2416;
+  --md-footer-bg-color--dark:       #16110a;
+
+  /* --- Shadow (warm, not cool grey) --- */
+  --md-shadow-z1: 0 0.125rem 0.25rem rgba(44, 36, 22, 0.10),
+                  0 0 0.0625rem   rgba(44, 36, 22, 0.12);
+  --md-shadow-z2: 0 0.25rem 0.5rem  rgba(44, 36, 22, 0.12),
+                  0 0 0.125rem    rgba(44, 36, 22, 0.14);
+  --md-shadow-z3: 0 0.5rem 1rem    rgba(44, 36, 22, 0.14),
+                  0 0 0.25rem     rgba(44, 36, 22, 0.16);
+}
+
+/* ================================================================
+   DARK MODE — "slate"
+   Evokes a manuscript viewed by candlelight / a dimmed study lamp
+   ================================================================ */
+
+[data-md-color-scheme="slate"] {
+
+  /* --- Primary: warm near-black with brown undertone --- */
+  --md-primary-fg-color:         #f2ebe0;
+  --md-primary-fg-color--light:  #f5f0e6;
+  --md-primary-fg-color--dark:   #d8cbb8;
+  --md-primary-bg-color:         #1e1a14;
+  --md-primary-bg-color--light:  rgba(30, 26, 20, 0.82);
+
+  /* --- Accent: lighter verdigris for contrast on dark --- */
+  --md-accent-fg-color:              #7ab8a8;
+  --md-accent-fg-color--transparent: rgba(122, 184, 168, 0.14);
+  --md-accent-bg-color:              #1e2e2b;
+  --md-accent-bg-color--light:       rgba(30, 46, 43, 0.54);
+
+  /* --- Default foreground (brighter warm white for legibility) --- */
+  --md-default-fg-color:           #f2ebe0;
+  --md-default-fg-color--light:    rgba(242, 235, 224, 0.76);
+  --md-default-fg-color--lighter:  rgba(242, 235, 224, 0.50);
+  --md-default-fg-color--lightest: rgba(242, 235, 224, 0.16);
+
+  /* --- Default background surfaces (layered warm darks) --- */
+  --md-default-bg-color:           #1e1a14;
+  --md-default-bg-color--light:    rgba(30, 26, 20, 0.74);
+  --md-default-bg-color--lighter:  rgba(30, 26, 20, 0.50);
+  --md-default-bg-color--lightest: rgba(30, 26, 20, 0.12);
+
+  /* --- Typeset body copy --- */
+  --md-typeset-color:               #f2ebe0;
+  --md-typeset-a-color:             #7ab8a8;
+  --md-typeset-mark-color:          rgba(122, 184, 168, 0.20);
+  --md-typeset-kbd-color:           #2a2419;
+  --md-typeset-kbd-accent-color:    #3a3228;
+  --md-typeset-kbd-border-color:    #4e4438;
+  --md-typeset-table-color:         rgba(242, 235, 224, 0.06);
+
+  /* --- Code blocks --- */
+  --md-code-fg-color:               #f2ebe0;
+  --md-code-bg-color:               #26211a;
+  --md-code-hl-color:               rgba(122, 184, 168, 0.14);
+  --md-code-hl-number-color:        #d4845a;
+  --md-code-hl-special-color:       #b08ed4;
+  --md-code-hl-function-color:      #7ab0d4;
+  --md-code-hl-constant-color:      #c47090;
+  --md-code-hl-keyword-color:       #7ab8a8;
+  --md-code-hl-string-color:        #a4b86a;
+  --md-code-hl-name-color:          #f2ebe0;
+  --md-code-hl-operator-color:      rgba(242, 235, 224, 0.62);
+  --md-code-hl-punctuation-color:   rgba(242, 235, 224, 0.44);
+  --md-code-hl-comment-color:       rgba(242, 235, 224, 0.36);
+  --md-code-hl-generic-color:       rgba(242, 235, 224, 0.56);
+  --md-code-hl-variable-color:      rgba(242, 235, 224, 0.56);
+
+  /* --- Admonitions --- */
+  --md-admonition-fg-color:         rgba(242, 235, 224, 0.87);
+  --md-admonition-bg-color:         #26211a;
+
+  /* --- Footer --- */
+  --md-footer-fg-color:             rgba(242, 235, 224, 0.84);
+  --md-footer-fg-color--light:      rgba(242, 235, 224, 0.58);
+  --md-footer-fg-color--lighter:    rgba(242, 235, 224, 0.36);
+  --md-footer-bg-color:             #141008;
+  --md-footer-bg-color--dark:       #0a0804;
+
+  /* --- Shadow --- */
+  --md-shadow-z1: 0 0.125rem 0.25rem rgba(10, 8, 4, 0.30),
+                  0 0 0.0625rem   rgba(10, 8, 4, 0.36);
+  --md-shadow-z2: 0 0.25rem 0.5rem  rgba(10, 8, 4, 0.36),
+                  0 0 0.125rem    rgba(10, 8, 4, 0.42);
+  --md-shadow-z3: 0 0.5rem 1rem    rgba(10, 8, 4, 0.42),
+                  0 0 0.25rem     rgba(10, 8, 4, 0.48);
+}
+
+/* ================================================================
+   GLOBAL OVERRIDES
+   Fine-grained typographic and component refinements
+   ================================================================ */
+
+/* --- Header: book-spine gradient (light) --- */
+[data-md-color-scheme="default"] .md-header {
+  background: linear-gradient(
+    135deg,
+    #2c2416 0%,
+    #3d3020 55%,
+    #4a3c28 100%
+  );
+  box-shadow: 0 1px 0 rgba(44, 36, 22, 0.22),
+              0 2px 8px rgba(44, 36, 22, 0.14);
+}
+
+/* --- Header: deep night-study gradient (dark) --- */
+[data-md-color-scheme="slate"] .md-header {
+  background: linear-gradient(
+    135deg,
+    #0e0b07 0%,
+    #1a1510 55%,
+    #22190f 100%
+  );
+  box-shadow: 0 1px 0 rgba(10, 8, 4, 0.48),
+              0 2px 8px rgba(10, 8, 4, 0.36);
+}
+
+/* --- Header title: set in Lora for the "press" feel --- */
+.md-header__title {
+  font-family: "Playfair Display", "Georgia", serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* --- Navigation sidebar titles --- */
+.md-nav__title {
+  font-family: "Playfair Display", "Georgia", serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+}
+
+/* --- Nav active item highlight (light) --- */
+[data-md-color-scheme="default"] .md-nav__item--active > .md-nav__link {
+  color: #4e7c6f;
+  font-weight: 500;
+  border-left: 2px solid #4e7c6f;
+  padding-left: calc(0.6rem - 2px);
+}
+
+/* --- Nav active item highlight (dark) --- */
+[data-md-color-scheme="slate"] .md-nav__item--active > .md-nav__link {
+  color: #7ab8a8;
+  font-weight: 500;
+  border-left: 2px solid #7ab8a8;
+  padding-left: calc(0.6rem - 2px);
+}
+
+/* --- Body prose: Baskerville at comfortable size --- */
+.md-typeset {
+  font-size: 0.88rem;
+  line-height: 1.75;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+/* --- Headings: Lora for all heading levels --- */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4 {
+  font-family: "Playfair Display", "Georgia", serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.md-typeset h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.22;
+  margin-bottom: 0.5em;
+  letter-spacing: -0.02em;
+}
+
+.md-typeset h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+  padding-bottom: 0.22em;
+  margin-top: 1.8em;
+  letter-spacing: -0.01em;
+}
+
+/* --- Links: subtle underline, accent on hover --- */
+.md-typeset a {
+  text-decoration: none;
+  border-bottom: 1px solid var(--md-accent-fg-color--transparent);
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+.md-typeset a:hover {
+  color: var(--md-typeset-a-color);
+  border-bottom-color: var(--md-typeset-a-color);
+}
+
+/* --- Tables: fine-rule academic style --- */
+.md-typeset table:not([class]) {
+  font-size: 0.75rem;
+  border-collapse: collapse;
+  border-top: 2px solid var(--md-default-fg-color--light);
+  border-bottom: 2px solid var(--md-default-fg-color--light);
+}
+
+.md-typeset table:not([class]) th {
+  font-family: "Playfair Display", serif;
+  font-size: 0.70rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background-color: var(--md-typeset-table-color);
+  border-bottom: 1px solid var(--md-default-fg-color--lighter);
+}
+
+.md-typeset table:not([class]) td,
+.md-typeset table:not([class]) th {
+  padding: 0.55em 0.9em;
+  border: none;
+}
+
+.md-typeset table:not([class]) tbody tr:nth-child(even) {
+  background-color: var(--md-typeset-table-color);
+}
+
+/* --- Code blocks: tight mono, warm tint --- */
+.md-typeset pre > code {
+  font-size: 0.72rem;
+  line-height: 1.62;
+  border-radius: 3px;
+}
+
+.md-typeset code:not(.highlight code) {
+  font-size: 0.78em;
+  padding: 0.1em 0.32em;
+  border-radius: 2px;
+  background-color: var(--md-code-bg-color);
+}
+
+/* --- Blockquote: pull-quote rule style --- */
+.md-typeset blockquote {
+  border-left: 3px solid var(--md-accent-fg-color);
+  padding-left: 1.1em;
+  margin-left: 0;
+  font-style: italic;
+  color: var(--md-default-fg-color--light);
+}
+
+/* --- Tabs (content tabs): understated rule style --- */
+.md-typeset .tabbed-labels > label {
+  font-family: "Playfair Display", serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+/* --- Search box: warm border treatment --- */
+[data-md-color-scheme="default"] .md-search__input {
+  background-color: rgba(250, 247, 242, 0.12);
+  border: 1px solid rgba(250, 247, 242, 0.22);
+  color: #faf7f2;
+}
+
+[data-md-color-scheme="slate"] .md-search__input {
+  background-color: rgba(30, 26, 20, 0.50);
+  border: 1px solid rgba(242, 235, 224, 0.14);
+  color: #f2ebe0;
+}
+
+/* --- Announce banner (if used) --- */
+.md-banner {
+  background-color: var(--md-primary-fg-color--light);
+  color: var(--md-primary-bg-color);
+  font-family: "Playfair Display", serif;
+  font-size: 0.74rem;
+  font-style: italic;
+  letter-spacing: 0.01em;
+}

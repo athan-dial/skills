@@ -1,0 +1,74 @@
+# Folio — build and preview commands
+
+# Zensical binary — absolute path into the repo-local venv (skills/tools/venv/,
+# pinned in skills/tools/requirements.txt). Using justfile_directory() so recipes
+# that `cd` into subdirs (docs/, site/) still resolve the binary correctly.
+# Override with ZENSICAL_BIN=/path/to/zensical if needed.
+zensical := env("ZENSICAL_BIN", justfile_directory() / "../../tools/venv/bin/zensical")
+docs_port := "8100"
+site_port := "8200"
+
+# Build documentation site
+docs-build:
+    cd docs && {{zensical}} build
+
+# Copy built docs into site/docs/ so product page can link to /docs/
+docs-stage: docs-build
+    rm -rf site/docs
+    cp -r docs/site site/docs
+
+# Serve docs standalone with hot reload (for doc editing)
+docs-serve:
+    cd docs && {{zensical}} serve --dev-addr 127.0.0.1:{{docs_port}}
+
+# Serve the full site (product page + docs at /docs/)
+site-serve: docs-stage
+    @echo "Folio → http://127.0.0.1:{{site_port}} (docs at /docs/)"
+    cd site && python3 -m http.server {{site_port}} --bind 127.0.0.1
+
+# Build and serve everything
+serve: site-serve
+
+# Open product page in default browser
+open:
+    open http://127.0.0.1:{{site_port}}
+
+# Open docs in default browser
+open-docs:
+    open http://127.0.0.1:{{docs_port}}
+
+# Validate workspace inputs (smoke test the scripts)
+validate workspace:
+    python3 scripts/validate_inputs.py {{workspace}}
+
+# Check all artifacts in a workspace
+check workspace:
+    python3 scripts/check_artifacts.py {{workspace}}
+
+# Classify materials in a workspace
+classify workspace:
+    python3 scripts/classify_materials.py {{workspace}}
+
+# Route mode for a workspace
+route workspace:
+    python3 scripts/route_mode.py {{workspace}}
+
+# Run the full prep pipeline (classify → route → validate)
+prep workspace: (classify workspace) (route workspace) (validate workspace)
+    @echo "Prep pipeline complete."
+
+# Scan for IP/redline violations
+scan workspace:
+    python3 scripts/scan_redlines.py {{workspace}}
+
+# Compile final LaTeX package
+compile workspace:
+    bash scripts/compile_package.sh {{workspace}}
+
+# Package exports for delivery
+package workspace:
+    python3 scripts/package_exports.py {{workspace}}
+
+# Full export pipeline: scan → compile → package
+export workspace: (scan workspace) (compile workspace) (package workspace)
+    @echo "Export pipeline complete."

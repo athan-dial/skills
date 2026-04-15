@@ -79,7 +79,7 @@ Display resumption state as:
 | `compile_package.sh` | PDF compilation (pdflatex/bibtex) | 6 |
 | `package_exports.py` | Assemble `final/` bundle | 6 |
 
-Run all scripts via the **Bash** tool from the repo root. Python targets **3.10+**, stdlib only.
+Run all scripts via the **Bash** tool from the `skills/` repo root by prefixing invocations with `cd plugins/folio && ...`. Python targets **3.10+**, stdlib only.
 
 ## References
 

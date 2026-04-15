@@ -92,7 +92,7 @@ Three substages (order flexible; complete all before D4):
 **Gate F — Structural integrity:**
 
 ```bash
-python scripts/check_artifacts.py workspace/
+cd plugins/folio && python scripts/check_artifacts.py workspace/
 ```
 
 Resolve broken cites/refs per script output.
@@ -108,7 +108,7 @@ Resolve broken cites/refs per script output.
 **IP scan (mandatory):**
 
 ```bash
-python scripts/scan_redlines.py workspace/
+cd plugins/folio && python scripts/scan_redlines.py workspace/
 ```
 
 **IP Gate:** BLOCK on violations until addressed.
@@ -146,7 +146,7 @@ Present final scorecard, deferred issues, softened claims. Ask whether draft is 
 2. Compile:
 
 ```bash
-bash scripts/compile_package.sh workspace/
+cd plugins/folio && bash scripts/compile_package.sh workspace/
 ```
 
 3. On failure: report errors, attempt minimal fixes, re-run. If still failing, deliver source bundle without PDF and document why.

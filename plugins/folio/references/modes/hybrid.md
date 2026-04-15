@@ -18,7 +18,7 @@ Follows **W2 + W3** protocols for the conceptual front-half.
 **Gate C — Claim ledger build:**
 
 ```bash
-python scripts/build_claim_ledger.py workspace/
+cd plugins/folio && python scripts/build_claim_ledger.py workspace/
 ```
 
 Block on failure; fix JSON and claims until pass.
@@ -67,7 +67,7 @@ After merged outline (and optionally partial drafts): approve structure and form
 **IP scan (mandatory):**
 
 ```bash
-python scripts/scan_redlines.py workspace/
+cd plugins/folio && python scripts/scan_redlines.py workspace/
 ```
 
 **IP Gate:** BLOCK on violations.
@@ -106,7 +106,7 @@ Approve packaging, sensitive content, and split vs. unified artifacts. **Wait fo
 **Compile LaTeX portions:**
 
 ```bash
-bash scripts/compile_package.sh workspace/
+cd plugins/folio && bash scripts/compile_package.sh workspace/
 ```
 
 Ensure `exports/` and `final/` reflect hybrid bundle policy per `package_exports.py`. Then run shared final packaging.

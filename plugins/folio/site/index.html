@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Folio &mdash; From raw research to finished manuscript</title>
+<meta name="description" content="A Claude Code skill that orchestrates research manuscripts from messy materials into polished, exportable papers.">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   RESET & BASE
+   ================================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ink:        #2c2416;
+  --ink-light:  #4a3c28;
+  --ink-lighter: rgba(44, 36, 22, 0.48);
+  --ink-faint:  rgba(44, 36, 22, 0.16);
+  --ink-ghost:  rgba(44, 36, 22, 0.08);
+  --verdigris:  #4e7c6f;
+  --verdigris-light: rgba(78, 124, 111, 0.12);
+  --parchment:  #faf7f2;
+  --parchment-warm: #f3ede4;
+  --parchment-deep: #ebe3d6;
+  --code-bg:    #f3ede4;
+  --shadow-sm:  0 1px 3px rgba(44, 36, 22, 0.08);
+  --shadow-md:  0 4px 12px rgba(44, 36, 22, 0.10);
+  --shadow-lg:  0 8px 24px rgba(44, 36, 22, 0.12);
+  --radius:     4px;
+  --transition: 220ms ease;
+}
+
+[data-theme="dark"] {
+  --ink:        #f2ebe0;
+  --ink-light:  #c8baa6;
+  --ink-lighter: rgba(242, 235, 224, 0.46);
+  --ink-faint:  rgba(242, 235, 224, 0.14);
+  --ink-ghost:  rgba(242, 235, 224, 0.06);
+  --verdigris:  #7ab8a8;
+  --verdigris-light: rgba(122, 184, 168, 0.14);
+  --parchment:  #1e1a14;
+  --parchment-warm: #26211a;
+  --parchment-deep: #2e2820;
+  --code-bg:    #26211a;
+  --shadow-sm:  0 1px 3px rgba(10, 8, 4, 0.24);
+  --shadow-md:  0 4px 12px rgba(10, 8, 4, 0.30);
+  --shadow-lg:  0 8px 24px rgba(10, 8, 4, 0.36);
+}
+
+html {
+  font-size: 18px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Paper texture */
+body {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--ink);
+  background: var(--parchment);
+  line-height: 1.72;
+  transition: background var(--transition), color var(--transition);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+[data-theme="dark"] body {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* Selection */
+::selection {
+  background: rgba(78, 124, 111, 0.2);
+}
+[data-theme="dark"] ::selection {
+  background: rgba(122, 184, 168, 0.2);
+}
+
+/* ================================================================
+   TYPOGRAPHY
+   ================================================================ */
+h1, h2, h3, h4 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+a {
+  color: var(--verdigris);
+  text-decoration: none;
+  border-bottom: 1px solid var(--verdigris-light);
+  transition: color var(--transition), border-color var(--transition);
+}
+a:hover {
+  border-bottom-color: var(--verdigris);
+}
+
+code, .code {
+  font-family: "IBM Plex Mono", Menlo, monospace;
+  font-weight: 400;
+  font-size: 0.82em;
+}
+
+.small-caps {
+  font-variant: small-caps;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+}
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+.container {
+  max-width: var(--max-w, 1100px);
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+section {
+  padding: 5rem 0;
+}
+
+/* Section divider — thin centered hairline */
+.section-divider {
+  display: block;
+  width: 60px;
+  height: 1px;
+  background: var(--ink-faint);
+  border: none;
+  margin: 0 auto;
+}
+
+/* ================================================================
+   THEME TOGGLE
+   ================================================================ */
+.theme-toggle {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 100;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid var(--ink-faint);
+  border-radius: 50%;
+  background: var(--parchment-warm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), border-color var(--transition), transform 180ms ease;
+  box-shadow: var(--shadow-sm);
+}
+.theme-toggle:hover {
+  transform: scale(1.08);
+  border-color: var(--ink-lighter);
+}
+.theme-toggle svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: var(--ink-light);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke var(--transition);
+}
+.theme-toggle .icon-moon { display: block; }
+.theme-toggle .icon-sun  { display: none; }
+[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+[data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
+
+/* ================================================================
+   HERO
+   ================================================================ */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Double decorative border frame — outer rule */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 2.5rem;
+  border: 1px solid var(--ink-faint);
+  pointer-events: none;
+}
+
+/* Double decorative border frame — inner rule (3px gap) */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: calc(2.5rem + 4px);
+  border: 1px solid var(--ink-faint);
+  pointer-events: none;
+}
+
+.hero-inner {
+  max-width: 680px;
+}
+
+.hero-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(4rem, 10vw, 8rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-bottom: 0.3em;
+  color: var(--ink);
+}
+
+.hero-rule {
+  width: 60px;
+  height: 1px;
+  background: var(--verdigris);
+  border: none;
+  margin: 0 auto 1.5rem;
+}
+
+.hero-tagline {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+  font-style: italic;
+  font-style: italic;
+  color: var(--ink-light);
+  margin-bottom: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+/* Ornamental flourish */
+.hero-ornament {
+  display: block;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--verdigris);
+  margin-bottom: 1rem;
+  letter-spacing: 0.2em;
+}
+
+.hero-desc {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-weight: 400;
+  font-size: 1.05rem;
+  color: var(--ink-lighter);
+  max-width: 520px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.7;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.72rem 1.6rem;
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  text-decoration: none;
+  border-bottom: none;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--parchment);
+}
+.btn-primary:hover {
+  background: var(--ink-light);
+  border-bottom-color: transparent;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink-faint);
+}
+.btn-secondary:hover {
+  border-color: var(--ink-lighter);
+  background: var(--ink-ghost);
+  border-bottom-color: var(--ink-lighter);
+}
+
+/* ================================================================
+   SECTION HEADERS
+   ================================================================ */
+.section-numeral {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: 0.9rem;
+  color: var(--ink-lighter);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.6rem;
+  display: block;
+}
+
+.section-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 500;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-weight: 400;
+  font-size: 1.1rem;
+  color: var(--ink-lighter);
+  max-width: 560px;
+  line-height: 1.65;
+}
+
+.section-rule {
+  width: 40px;
+  height: 1px;
+  background: var(--verdigris);
+  border: none;
+  margin: 1.5rem auto 0;
+  display: block;
+}
+
+.section-header-centered {
+  text-align: center;
+}
+
+.section-header-centered .section-subtitle {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ================================================================
+   VALUE CARDS (What it does)
+   ================================================================ */
+.value-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 3.5rem;
+}
+
+.value-card {
+  padding: 2rem 1.8rem;
+  background: var(--parchment);
+  border: 1px solid var(--ink-faint);
+  border-radius: var(--radius);
+  transition: border-color var(--transition), transform 180ms ease, box-shadow 180ms ease;
+}
+.value-card:hover {
+  border-color: var(--verdigris);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(44, 36, 22, 0.06);
+}
+
+.value-numeral {
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--verdigris);
+  line-height: 1;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.value-card h3 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 500;
+  font-size: 1.15rem;
+  margin-bottom: 0.6rem;
+}
+
+.value-card p {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-weight: 400;
+  font-size: 0.95rem;
+  color: var(--ink-lighter);
+  line-height: 1.65;
+}
+
+/* ================================================================
+   THREE MODES
+   ================================================================ */
+.modes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 3.5rem;
+}
+
+.mode-card {
+  position: relative;
+  padding: 2.2rem 1.8rem 2rem;
+  border: 1px solid var(--ink-faint);
+  border-radius: var(--radius);
+  background: var(--parchment);
+  transition: border-color var(--transition), transform 180ms ease, box-shadow 180ms ease;
+  overflow: hidden;
+}
+.mode-card:hover {
+  border-color: var(--verdigris);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(44, 36, 22, 0.06);
+}
+
+/* Top accent bar */
+.mode-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.mode-card[data-mode="white"]::before  { background: var(--ink-light); }
+.mode-card[data-mode="data"]::before   { background: var(--verdigris); }
+.mode-card[data-mode="hybrid"]::before {
+  background: linear-gradient(90deg, var(--ink-light), var(--verdigris));
+}
+
+.mode-label {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-lighter);
+  margin-bottom: 0.6rem;
+}
+
+.mode-card h3 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 500;
+  font-size: 1.2rem;
+  margin-bottom: 0.7rem;
+}
+
+.mode-card p {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-weight: 400;
+  font-size: 0.92rem;
+  color: var(--ink-lighter);
+  line-height: 1.65;
+}
+
+.mode-traits {
+  margin-top: 1.2rem;
+  list-style: none;
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 0.86rem;
+  color: var(--ink-lighter);
+}
+.mode-traits li {
+  padding: 0.25rem 0;
+  padding-left: 1rem;
+  position: relative;
+}
+.mode-traits li::before {
+  content: "\2014";
+  position: absolute;
+  left: 0;
+  color: var(--verdigris);
+  font-weight: 600;
+}
+
+/* ================================================================
+   WORKFLOW PIPELINE
+   ================================================================ */
+.pipeline {
+  margin-top: 3.5rem;
+  position: relative;
+}
+
+/* Horizontal track */
+.pipeline-track {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  padding: 1rem 0 2rem;
+}
+
+/* Connecting line — dashed for literary feel */
+.pipeline-track::before {
+  content: "";
+  position: absolute;
+  top: 2.6rem;
+  left: 2.5rem;
+  right: 2.5rem;
+  height: 0;
+  border-top: 1px dashed var(--ink-faint);
+}
+
+.pipeline-stage {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.stage-dot {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: var(--parchment);
+  border: 2px solid var(--ink-faint);
+  margin: 0 auto 0.8rem;
+  transition: border-color 400ms ease, background 400ms ease, transform 300ms ease;
+}
+
+/* Checkpoint styling — ornament instead of filled dot */
+.pipeline-stage[data-checkpoint] .stage-dot {
+  width: auto;
+  height: auto;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.9rem;
+  color: var(--verdigris);
+  line-height: 1;
+  margin-bottom: 0.6rem;
+}
+
+.pipeline-stage[data-checkpoint] .stage-dot::after {
+  content: "\2726";
+  display: block;
+}
+
+.stage-name {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-variant: small-caps;
+  letter-spacing: 0.12em;
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+  color: var(--ink);
+}
+
+.stage-desc {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-weight: 400;
+  font-size: 0.74rem;
+  color: var(--ink-lighter);
+  line-height: 1.5;
+  max-width: 120px;
+  margin: 0 auto;
+}
+
+.stage-checkpoint-label {
+  display: none;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--verdigris);
+  margin-top: 0.5rem;
+}
+
+.pipeline-stage[data-checkpoint] .stage-checkpoint-label {
+  display: block;
+}
+
+/* Pipeline legend */
+.pipeline-legend {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ink-faint);
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 0.78rem;
+  color: var(--ink-lighter);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  border: 2px solid var(--ink-faint);
+  background: var(--parchment);
+  flex-shrink: 0;
+}
+
+.legend-dot--checkpoint {
+  border: none;
+  border-radius: 0;
+  width: auto;
+  height: auto;
+  font-size: 0.6rem;
+  color: var(--verdigris);
+  line-height: 1;
+}
+.legend-dot--checkpoint::after {
+  content: "\2726";
+}
+
+/* ================================================================
+   QUICK START
+   ================================================================ */
+.quickstart-block {
+  margin-top: 2.5rem;
+  max-width: 640px;
+}
+
+.quickstart-label {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: 0.9rem;
+  color: var(--ink-lighter);
+  margin-bottom: 0.8rem;
+}
+
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--ink-faint);
+  border-top: 2px solid var(--verdigris);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.8rem;
+  overflow-x: auto;
+  position: relative;
+}
+
+.code-block pre {
+  margin: 0;
+  font-family: "IBM Plex Mono", Menlo, monospace;
+  font-weight: 400;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.code-comment {
+  color: var(--ink-lighter);
+}
+
+.code-string {
+  color: #6b7c3a;
+}
+[data-theme="dark"] .code-string {
+  color: #a4b86a;
+}
+
+/* ================================================================
+   FOOTER
+   ================================================================ */
+footer {
+  padding: 3rem 0;
+  border-top: 1px solid var(--ink-faint);
+}
+
+.footer-ornament {
+  display: block;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--ink-faint);
+  margin-bottom: 1.5rem;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-brand {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 0.86rem;
+}
+
+.footer-links a {
+  color: var(--ink-lighter);
+  border-bottom: none;
+}
+.footer-links a:hover {
+  color: var(--verdigris);
+}
+
+.footer-note {
+  width: 100%;
+  text-align: center;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: 0.76rem;
+  color: var(--ink-lighter);
+  margin-top: 1rem;
+}
+
+/* ================================================================
+   SCROLL ANIMATIONS
+   ================================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .js-ready .reveal {
+    opacity: 0;
+    transform: translateY(1.2rem) scale(0.98);
+    transition: opacity 800ms ease-out, transform 800ms ease-out;
+  }
+  .js-ready .reveal.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .js-ready .reveal-stagger > * {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.98);
+    transition: opacity 700ms ease-out, transform 700ms ease-out;
+  }
+  .js-ready .reveal-stagger.visible > *:nth-child(1) { transition-delay: 0ms; }
+  .js-ready .reveal-stagger.visible > *:nth-child(2) { transition-delay: 140ms; }
+  .js-ready .reveal-stagger.visible > *:nth-child(3) { transition-delay: 280ms; }
+  .js-ready .reveal-stagger.visible > *:nth-child(4) { transition-delay: 420ms; }
+  .js-ready .reveal-stagger.visible > *:nth-child(5) { transition-delay: 560ms; }
+  .js-ready .reveal-stagger.visible > *:nth-child(6) { transition-delay: 700ms; }
+  .js-ready .reveal-stagger.visible > * {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .js-ready .pipeline-track .pipeline-stage {
+    opacity: 0;
+    transform: translateY(0.8rem) scale(0.98);
+    transition: opacity 600ms ease-out, transform 600ms ease-out;
+  }
+  .js-ready .pipeline-track.visible .pipeline-stage {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  .js-ready .pipeline-track.visible .pipeline-stage:nth-child(1) { transition-delay: 0ms; }
+  .js-ready .pipeline-track.visible .pipeline-stage:nth-child(2) { transition-delay: 120ms; }
+  .js-ready .pipeline-track.visible .pipeline-stage:nth-child(3) { transition-delay: 240ms; }
+  .js-ready .pipeline-track.visible .pipeline-stage:nth-child(4) { transition-delay: 360ms; }
+  .js-ready .pipeline-track.visible .pipeline-stage:nth-child(5) { transition-delay: 480ms; }
+  .js-ready .pipeline-track.visible .pipeline-stage:nth-child(6) { transition-delay: 600ms; }
+}
+
+/* Pipeline line animation */
+@media (prefers-reduced-motion: no-preference) {
+  .js-ready .pipeline-track::before {
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 800ms ease 200ms;
+  }
+  .js-ready .pipeline-track.visible::before {
+    transform: scaleX(1);
+  }
+}
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 820px) {
+  html { font-size: 16px; }
+
+  .hero-title { font-size: clamp(3rem, 10vw, 5rem); }
+  .hero::before { inset: 1.5rem; }
+  .hero::after { inset: calc(1.5rem + 4px); }
+
+  .value-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .modes-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .pipeline-track {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 2rem;
+  }
+
+  .pipeline-track::before {
+    top: 0;
+    bottom: 0;
+    left: 1.35rem;
+    right: auto;
+    width: 0;
+    height: auto;
+    border-top: none;
+    border-left: 1px dashed var(--ink-faint);
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  .pipeline-track.visible::before {
+    transform: scaleY(1);
+  }
+
+  .pipeline-stage {
+    text-align: left;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.6rem 0;
+  }
+
+  .stage-dot {
+    margin: 0.15rem 0 0;
+    flex-shrink: 0;
+  }
+
+  .stage-desc {
+    max-width: none;
+    margin: 0;
+  }
+
+  .pipeline-legend {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero-title { font-size: clamp(2.8rem, 10vw, 4rem); }
+  .hero-tagline { font-size: 1.15rem; }
+  .hero-ctas { flex-direction: column; align-items: center; }
+  .container { padding: 0 1.2rem; }
+  section { padding: 3.5rem 0; }
+
+  .footer-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+  .footer-links { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" aria-label="Toggle dark mode" type="button">
+  <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1 class="hero-title">Folio</h1>
+    <hr class="hero-rule">
+    <p class="hero-tagline">From raw research to finished manuscript.</p>
+    <span class="hero-ornament">&diams;</span>
+    <p class="hero-desc">
+      A Claude Code skill that takes your messy notes, data, and references
+      and orchestrates them into a polished, export-ready paper&thinsp;&mdash;&thinsp;with
+      human checkpoints at every critical turn.
+    </p>
+    <div class="hero-ctas">
+      <a href="docs/" class="btn btn-primary">Read the Docs</a>
+      <a href="https://github.com/athan-dial/folio" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink:0"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ============================================================
+     WHAT IT DOES
+     ============================================================ -->
+<section>
+  <div class="container">
+    <div class="reveal section-header-centered">
+      <span class="section-numeral">I.</span>
+      <h2 class="section-title">Three acts, one command.</h2>
+      <p class="section-subtitle">
+        Folio handles the tedious mechanics of manuscript assembly
+        so you can focus on the ideas.
+      </p>
+      <hr class="section-rule">
+    </div>
+
+    <div class="value-grid reveal-stagger">
+      <!-- Normalizes -->
+      <div class="value-card">
+        <span class="value-numeral">01</span>
+        <h3>Normalizes</h3>
+        <p>
+          PDFs, notes, datasets, BibTeX files&thinsp;&mdash;&thinsp;whatever you have.
+          Folio classifies and structures your raw materials into a clean workspace.
+        </p>
+      </div>
+
+      <!-- Orchestrates -->
+      <div class="value-card">
+        <span class="value-numeral">02</span>
+        <h3>Orchestrates</h3>
+        <p>
+          A six-stage pipeline with three human checkpoints.
+          You approve direction before the skill commits to structure, prose, or export.
+        </p>
+      </div>
+
+      <!-- Exports -->
+      <div class="value-card">
+        <span class="value-numeral">03</span>
+        <h3>Exports</h3>
+        <p>
+          LaTeX, Markdown, or PDF. Folio compiles your manuscript with proper
+          citations, figures, and formatting&thinsp;&mdash;&thinsp;ready for submission or review.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ============================================================
+     THREE MODES
+     ============================================================ -->
+<section>
+  <div class="container">
+    <div class="reveal section-header-centered">
+      <span class="section-numeral">II.</span>
+      <h2 class="section-title">Shaped to your paper.</h2>
+      <p class="section-subtitle">
+        Folio routes to the right mode based on your materials, or you
+        can choose directly.
+      </p>
+      <hr class="section-rule">
+    </div>
+
+    <div class="modes-grid reveal-stagger">
+      <div class="mode-card" data-mode="white">
+        <p class="mode-label">Mode I</p>
+        <h3>White Paper</h3>
+        <p>
+          Narrative-driven, executive-facing. For positioning pieces,
+          technical reports, and thought leadership that argues a thesis.
+        </p>
+        <ul class="mode-traits">
+          <li>Markdown-first output</li>
+          <li>Narrative arc structure</li>
+          <li>Inline citations</li>
+        </ul>
+      </div>
+
+      <div class="mode-card" data-mode="data">
+        <p class="mode-label">Mode II</p>
+        <h3>Research Paper</h3>
+        <p>
+          Evidence-heavy, LaTeX-forward. For empirical research with
+          tables, figures, statistical results, and formal methodology.
+        </p>
+        <ul class="mode-traits">
+          <li>LaTeX output with BibTeX</li>
+          <li>IMRaD structure</li>
+          <li>Figure and table management</li>
+        </ul>
+      </div>
+
+      <div class="mode-card" data-mode="hybrid">
+        <p class="mode-label">Mode III</p>
+        <h3>Hybrid</h3>
+        <p>
+          Combined framing and evidence. When your paper needs both a
+          compelling narrative and rigorous empirical support.
+        </p>
+        <ul class="mode-traits">
+          <li>Flexible output format</li>
+          <li>Adaptive structure</li>
+          <li>Mixed citation styles</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ============================================================
+     WORKFLOW PIPELINE
+     ============================================================ -->
+<section>
+  <div class="container">
+    <div class="reveal section-header-centered">
+      <span class="section-numeral">III.</span>
+      <h2 class="section-title">Eight commands. One pipeline.</h2>
+      <p class="section-subtitle">
+        Run the full pipeline with <code>/folio</code>, or invoke any stage independently.
+      </p>
+      <hr class="section-rule">
+    </div>
+
+    <div class="pipeline">
+      <div class="pipeline-track">
+        <div class="pipeline-stage">
+          <div class="stage-dot"></div>
+          <div>
+            <p class="stage-name">Initialize</p>
+            <p class="stage-desc">Create workspace, ingest materials</p>
+            <p class="stage-checkpoint-label"><code>/folio:init</code></p>
+          </div>
+        </div>
+
+        <div class="pipeline-stage" data-checkpoint>
+          <div class="stage-dot"></div>
+          <div>
+            <p class="stage-name">Prep &amp; Route</p>
+            <p class="stage-desc">Classify, validate, build ledger, select mode</p>
+            <p class="stage-checkpoint-label"><code>/folio:prep</code></p>
+          </div>
+        </div>
+
+        <div class="pipeline-stage">
+          <div class="stage-dot"></div>
+          <div>
+            <p class="stage-name">Plan</p>
+            <p class="stage-desc">Outline structure and section plan</p>
+            <p class="stage-checkpoint-label"><code>/folio:plan</code></p>
+          </div>
+        </div>
+
+        <div class="pipeline-stage">
+          <div class="stage-dot"></div>
+          <div>
+            <p class="stage-name">Support</p>
+            <p class="stage-desc">Gather evidence, build citations</p>
+            <p class="stage-checkpoint-label"><code>/folio:support</code></p>
+          </div>
+        </div>
+
+        <div class="pipeline-stage" data-checkpoint>
+          <div class="stage-dot"></div>
+          <div>
+            <p class="stage-name">Draft</p>
+            <p class="stage-desc">Write sections in chosen mode</p>
+            <p class="stage-checkpoint-label"><code>/folio:draft</code></p>
+          </div>
+        </div>
+
+        <div class="pipeline-stage">
+          <div class="stage-dot"></div>
+          <div>
+            <p class="stage-name">Review</p>
+            <p class="stage-desc">Redline check, IP scan, polish</p>
+            <p class="stage-checkpoint-label"><code>/folio:review</code></p>
+          </div>
+        </div>
+
+        <div class="pipeline-stage" data-checkpoint>
+          <div class="stage-dot"></div>
+          <div>
+            <p class="stage-name">Export</p>
+            <p class="stage-desc">Compile and package deliverables</p>
+            <p class="stage-checkpoint-label"><code>/folio:export</code></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pipeline-legend reveal">
+        <div class="legend-item">
+          <span class="legend-dot"></span>
+          Automated stage
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot legend-dot--checkpoint"></span>
+          Human approval required
+        </div>
+        <div class="legend-item">
+          <code>/folio:status</code> &mdash; check workspace state anytime
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ============================================================
+     QUICK START
+     ============================================================ -->
+<section>
+  <div class="container">
+    <div class="reveal section-header-centered">
+      <span class="section-numeral">IV.</span>
+      <h2 class="section-title">Three lines to go.</h2>
+      <p class="section-subtitle">
+        Install the skill, run the full pipeline or a single stage.
+      </p>
+      <hr class="section-rule">
+    </div>
+
+    <div class="quickstart-block reveal">
+      <p class="quickstart-label">Install &amp; run.</p>
+      <div class="code-block">
+<pre><span class="code-comment"># Install</span>
+git clone https://github.com/athan-dial/folio ~/.claude/skills/folio
+
+<span class="code-comment"># Run full pipeline</span>
+/folio <span class="code-string">"Your research idea"</span> /path/to/materials
+
+<span class="code-comment"># Or run a single stage</span>
+/folio:status workspace/</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+  <div class="container">
+    <span class="footer-ornament">&#10087;</span>
+    <div class="footer-inner">
+      <span class="footer-brand">Folio</span>
+      <ul class="footer-links">
+        <li><a href="docs/">Documentation</a></li>
+        <li><a href="https://github.com/athan-dial/folio">GitHub</a></li>
+        <li><a href="https://github.com/athan-dial/folio/blob/main/LICENSE">MIT License</a></li>
+      </ul>
+    </div>
+    <p class="footer-note">
+      Built for manuscript work on Claude Code.
+    </p>
+  </div>
+</footer>
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<script>
+// Dark mode toggle
+(function() {
+  var toggle = document.querySelector('.theme-toggle');
+  var html = document.documentElement;
+
+  var saved = localStorage.getItem('folio-theme');
+  if (saved) {
+    html.setAttribute('data-theme', saved);
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    html.setAttribute('data-theme', 'dark');
+  }
+
+  toggle.addEventListener('click', function() {
+    var current = html.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('folio-theme', next);
+  });
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+    if (!localStorage.getItem('folio-theme')) {
+      html.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    }
+  });
+})();
+
+// Scroll reveal via IntersectionObserver
+(function() {
+  document.documentElement.classList.add('js-ready');
+  var targets = document.querySelectorAll('.reveal, .reveal-stagger, .pipeline-track');
+  if (!('IntersectionObserver' in window)) {
+    targets.forEach(function(el) { el.classList.add('visible'); });
+    return;
+  }
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  targets.forEach(function(el) { observer.observe(el); });
+})();
+</script>
+
+</body>
+</html>

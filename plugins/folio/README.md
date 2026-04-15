@@ -1,3 +1,11 @@
+> **This repo is being migrated.** The Folio skill pack now lives at
+> [athan-dial/skills/plugins/folio](https://github.com/athan-dial/skills/tree/main/plugins/folio).
+> The worked example has moved to the 2B-new vault. Docs will publish at
+> [athan-dial.github.io/skills/folio](https://athan-dial.github.io/skills/folio).
+> This repo will be archived after end-to-end verification.
+
+---
+
 # Folio
 
 A Claude Code skill pack that converts research ideas and messy materials into validated, reviewable, exportable manuscripts through artifact-driven orchestration.

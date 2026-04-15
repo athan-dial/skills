@@ -20,7 +20,7 @@
 | Field | Value |
 |-------|-------|
 | **Trigger** | End of Stage 1 (Prep and Normalization), before Checkpoint 1 |
-| **Script** | `python scripts/validate_inputs.py workspace/` |
+| **Script** | `cd plugins/folio && python scripts/validate_inputs.py workspace/` |
 | **Pass** | Exit 0. Warnings acceptable; errors block. |
 | **Fail** | Fix canonical inputs under `inputs/`; re-run validator. |
 
@@ -46,7 +46,7 @@ Also re-run after editing any `inputs/*` file or after `classify_materials` / `r
 | Field | Value |
 |-------|-------|
 | **Trigger** | After claim ledger creation/update: W3 (white paper), D3-3A (research paper evidence accounting), H2/H3 (hybrid) |
-| **Script** | `python scripts/build_claim_ledger.py workspace/` |
+| **Script** | `cd plugins/folio && python scripts/build_claim_ledger.py workspace/` |
 | **Pass** | Script exits 0. |
 | **Fail** | Fix JSON and claims until pass. In research paper mode (D3-3A): block if any claim remains `unsupported` without user acknowledgment or if numerical claims lack traceable sources. |
 
@@ -79,7 +79,7 @@ Also re-run after editing any `inputs/*` file or after `classify_materials` / `r
 | Field | Value |
 |-------|-------|
 | **Trigger** | End of D4 (Draft Composition), also before D5/D6 and H5/H6 for LaTeX bodies |
-| **Script** | `python scripts/check_artifacts.py workspace/` |
+| **Script** | `cd plugins/folio && python scripts/check_artifacts.py workspace/` |
 | **Pass** | Script exits 0. All `\cite{}` keys exist in `refs.bib`; all `\ref{}` labels resolve. |
 | **Fail** | Fix broken cites/refs per script output. Re-run after every substantive edit to `drafts/paper.tex`. |
 
@@ -101,7 +101,7 @@ Also re-run after editing any `inputs/*` file or after `classify_materials` / `r
 | Field | Value |
 |-------|-------|
 | **Trigger** | After `package_exports.py` runs (shared exit, all modes) |
-| **Script** | `python scripts/package_exports.py workspace/` |
+| **Script** | `cd plugins/folio && python scripts/package_exports.py workspace/` |
 | **Pass** | Script exits 0. Output directory listing confirmed. |
 | **Fail** | Treat as packaging gate failure per Error Handling protocol. |
 
@@ -112,7 +112,7 @@ Also re-run after editing any `inputs/*` file or after `classify_materials` / `r
 | Field | Value |
 |-------|-------|
 | **Trigger** | During review stage of every mode (W5, D5, H5) — mandatory before declaring review complete |
-| **Script** | `python scripts/scan_redlines.py workspace/` |
+| **Script** | `cd plugins/folio && python scripts/scan_redlines.py workspace/` |
 | **Pass** | No violations in `reviews/ip_safety_report.md`. |
 | **Fail** | **BLOCK** shipping. List forbidden terms/patterns found. Suggest redactions per `ip_policy.json`. User must: redact, rewrite, or explicitly acknowledge risk (logged in `logs/run_log.md`). Do not mark stage complete until resolved. |
 
@@ -123,6 +123,6 @@ Also re-run after editing any `inputs/*` file or after `classify_materials` / `r
 | Field | Value |
 |-------|-------|
 | **Trigger** | After Checkpoint 1 approval, before entering any mode-specific stage |
-| **Script** | `python scripts/route_mode.py workspace/` (already run in Stage 1; read `route.json`) |
+| **Script** | `cd plugins/folio && python scripts/route_mode.py workspace/` (already run in Stage 1; read `route.json`) |
 | **Pass** | User confirms recommended mode or provides explicit override. |
 | **Fail** | Do not proceed into mode-specific stages. If user overrides, set `user_override` in `route.json` with reasons. Log decision in `logs/checkpoints.md`. |

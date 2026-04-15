@@ -102,11 +102,11 @@ You can also request a specific stage re-run: "Re-run the review stage on this w
 All scripts accept a workspace path as their only argument:
 
 ```bash
-python scripts/init_workspace.py workspace/
-python scripts/prep_materials.py workspace/
-python scripts/validate_inputs.py workspace/
-python scripts/build_claim_ledger.py workspace/
-python scripts/verify_citations.py workspace/
-python scripts/check_artifacts.py workspace/
-bash scripts/compile_package.sh workspace/
+cd plugins/folio && python scripts/init_workspace.py workspace/
+cd plugins/folio && python scripts/prep_materials.py workspace/
+cd plugins/folio && python scripts/validate_inputs.py workspace/
+cd plugins/folio && python scripts/build_claim_ledger.py workspace/
+cd plugins/folio && python scripts/verify_citations.py workspace/
+cd plugins/folio && python scripts/check_artifacts.py workspace/
+cd plugins/folio && bash scripts/compile_package.sh workspace/
 ```

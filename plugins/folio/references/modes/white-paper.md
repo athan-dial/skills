@@ -49,7 +49,7 @@ Selected when `route.json` returns `white_paper`. Emphasizes narrative, executiv
 **Gate C — Claim ledger build:**
 
 ```bash
-python scripts/build_claim_ledger.py workspace/
+cd plugins/folio && python scripts/build_claim_ledger.py workspace/
 ```
 
 Block on script failure; fix JSON and claims until pass.
@@ -82,7 +82,7 @@ Block on script failure; fix JSON and claims until pass.
 **IP scan (mandatory):**
 
 ```bash
-python scripts/scan_redlines.py workspace/
+cd plugins/folio && python scripts/scan_redlines.py workspace/
 ```
 
 Writes `reviews/ip_safety_report.md`. **IP Gate:** BLOCK on violations until cleared, redacted, or explicitly acknowledged.
