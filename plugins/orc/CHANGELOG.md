@@ -6,6 +6,14 @@ All notable changes to the `orc` plugin are documented here. Format follows [Kee
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-15
+
+### Added
+- `plugins/orc/docs/` — source for the public docs surface at <https://athandial.com/skills/orc/>. Page bundle with `_index.md`, `quickstart.md`, `architecture.md`. The companion site auto-generates `commands.md` (from `commands/*.md` frontmatter) and `changelog.md` (from this file) at build time.
+
+### Changed
+- `README.md` rewritten to reflect the current `/orc:*` command surface (was still referencing the pre-0.2 names like `orc:plan`, `orc:add`, `orc:list`). Now points to the docs site as the source of truth for everything beyond install + command list.
+
 ## [0.2.0] — 2026-04-15
 
 ### Added
