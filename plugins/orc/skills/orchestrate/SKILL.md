@@ -1,5 +1,5 @@
 ---
-name: plan
+name: orchestrate
 description: >
   Multi-agent orchestration — break complex work into parallel sub-tasks dispatched to Cursor,
   Codex, or Claude subagents. Use when a task has multiple independent sub-parts that benefit
