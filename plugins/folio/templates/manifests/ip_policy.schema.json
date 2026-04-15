@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IP Policy",
+  "description": "Terms, patterns, and exceptions for intellectual-property-safe output",
+  "type": "object",
+  "properties": {
+    "forbidden_terms": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "code_names": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "sensitive_metric_patterns": {
+      "description": "Regular expression patterns identifying sensitive metrics",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "redline_exceptions": {
+      "description": "Terms that resemble sensitive content but are approved for use",
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

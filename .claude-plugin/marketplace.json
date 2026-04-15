@@ -3,5 +3,16 @@
   "name": "athan-dial/skills",
   "description": "Athan Dial's Claude Code skills — orchestration, manuscript pipelines, and more.",
   "owner": "athan-dial",
-  "plugins": []
+  "plugins": [
+    {
+      "name": "orc",
+      "source": "./plugins/orc",
+      "description": "Multi-agent orchestration across Codex, Cursor, and Claude subagents."
+    },
+    {
+      "name": "folio",
+      "source": "./plugins/folio",
+      "description": "Manuscript orchestration pipeline (white paper / research paper / hybrid modes)."
+    }
+  ]
 }

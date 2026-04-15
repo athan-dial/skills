@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Review Scorecard",
+  "description": "Quality scores from a review round",
+  "type": "object",
+  "required": ["round", "scores"],
+  "properties": {
+    "round": { "type": "integer" },
+    "scores": {
+      "type": "object",
+      "required": ["argument_coherence", "evidence_support", "citation_quality", "writing_clarity", "venue_fit", "overall"],
+      "properties": {
+        "argument_coherence": { "type": "number", "minimum": 1, "maximum": 10 },
+        "evidence_support": { "type": "number", "minimum": 1, "maximum": 10 },
+        "citation_quality": { "type": "number", "minimum": 1, "maximum": 10 },
+        "writing_clarity": { "type": "number", "minimum": 1, "maximum": 10 },
+        "venue_fit": { "type": "number", "minimum": 1, "maximum": 10 },
+        "overall": { "type": "number", "minimum": 1, "maximum": 10 }
+      }
+    },
+    "blocking_issues": { "type": "array", "items": { "type": "string" } },
+    "suggestions": { "type": "array", "items": { "type": "string" } }
+  }
+}

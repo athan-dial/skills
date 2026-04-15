@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Route",
+  "description": "Selected document mode and rationale from planning or routing",
+  "type": "object",
+  "required": ["selected_mode", "confidence", "reasons"],
+  "properties": {
+    "selected_mode": {
+      "type": "string",
+      "enum": ["white_paper", "research_paper", "hybrid"]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "reasons": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "user_override": {
+      "description": "Explicit user override of selected mode, or null when not overridden",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "enum": ["white_paper", "research_paper", "hybrid"]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Citation Pool",
+  "description": "Verified citation metadata for the manuscript",
+  "type": "object",
+  "required": ["citations"],
+  "properties": {
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "title", "verified"],
+        "properties": {
+          "key": { "type": "string", "description": "BibTeX citation key" },
+          "title": { "type": "string" },
+          "authors": { "type": "array", "items": { "type": "string" } },
+          "year": { "type": "integer" },
+          "venue": { "type": "string" },
+          "doi": { "type": "string" },
+          "url": { "type": "string" },
+          "verified": { "type": "boolean" },
+          "relevance_area": { "type": "string" },
+          "relevance_score": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    }
+  }
+}

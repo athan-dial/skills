@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Intent",
+  "description": "Authoring intent and constraints for the paper workflow",
+  "type": "object",
+  "required": ["paper_id", "audience", "doc_type", "thesis"],
+  "properties": {
+    "paper_id": { "type": "string" },
+    "audience": { "type": "string" },
+    "doc_type": {
+      "type": "string",
+      "enum": ["white_paper", "research_paper", "hybrid"]
+    },
+    "thesis": { "type": "string" },
+    "constraints": { "type": "string" },
+    "forbidden_topics": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "preferred_mode": {
+      "description": "Preferred document mode, or null when unset",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "enum": ["white_paper", "research_paper", "hybrid"]
+        }
+      ]
+    },
+    "output_bundle": { "type": "string" }
+  }
+}

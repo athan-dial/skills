@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Figures Manifest",
+  "description": "Inventory of figures and tables available or planned",
+  "type": "object",
+  "required": ["figures"],
+  "properties": {
+    "figures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "type"],
+        "properties": {
+          "path": { "type": "string" },
+          "description": { "type": "string" },
+          "type": { "type": "string", "enum": ["chart", "diagram", "table", "photo", "screenshot", "other"] },
+          "format": { "type": "string" },
+          "needs_regeneration": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "planned": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["description", "type"],
+        "properties": {
+          "description": { "type": "string" },
+          "type": { "type": "string" },
+          "data_source": { "type": "string" },
+          "priority": { "type": "string", "enum": ["required", "nice-to-have"] }
+        }
+      }
+    }
+  }
+}

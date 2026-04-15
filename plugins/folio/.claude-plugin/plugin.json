@@ -1,0 +1,6 @@
+{
+  "name": "folio",
+  "description": "Manuscript orchestration. Converts research ideas into validated, exportable manuscripts through artifact-driven pipeline (white paper / research paper / hybrid modes).",
+  "version": "0.1.0",
+  "author": "athan-dial"
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Materials Manifest",
+  "description": "Inventory of raw materials provided for the paper workflow",
+  "type": "object",
+  "required": ["files"],
+  "properties": {
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "type"],
+        "properties": {
+          "path": { "type": "string", "description": "Relative path from workspace root" },
+          "type": { "type": "string", "enum": ["markdown", "text", "pdf", "latex", "bibtex", "data", "code", "notebook", "image", "other"] },
+          "extension": { "type": "string" },
+          "size_bytes": { "type": "integer" },
+          "description": { "type": "string" },
+          "relevance": { "type": "string", "enum": ["high", "medium", "low", "unknown"] }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total_files": { "type": "integer" },
+        "by_type": { "type": "object", "additionalProperties": { "type": "integer" } }
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Identified gaps in the materials"
+    }
+  }
+}
