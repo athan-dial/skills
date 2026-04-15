@@ -1,8 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/marketplace.json",
-  "name": "athan-dial/skills",
+  "name": "athan-dial-skills",
   "description": "Athan Dial's Claude Code skills — orchestration, manuscript pipelines, and more.",
-  "owner": "athan-dial",
+  "owner": {
+    "name": "Athan Dial",
+    "url": "https://github.com/athan-dial"
+  },
   "plugins": [
     {
       "name": "orc",
