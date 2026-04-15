@@ -140,48 +140,67 @@ def priority_label(p: str) -> str:
 
 
 def render_item(it: dict) -> None:
-    """Render one item row. Visual budget: 2 + 1 + 2 + 4 + 2 + title + 2 + tags + 2 + age."""
+    """Render one item row. Title wins the space contest; tags yield."""
     dot = prio_dot(it.get("priority", ""))
     iid = str(it.get("id", "?")).rjust(3)[:3]
     title = str(it.get("title", "")).strip()
     age = age_of(it.get("created", ""))
+
+    left_w = 2 + 1 + 1 + 3 + 1   # indent + dot + space + id + space
+    right_w = len(age) + 1       # age + trailing space
+    gap_before_age = 2
+    gap_before_tags = 2
+
+    # Reserve title space first — up to 60% of WIDTH or the full title, whichever smaller.
+    # This inverts the old priority: title > tags.
+    title_cap = max(30, int(WIDTH * 0.55))
+    title_room = min(len(title), title_cap)
+    # Ensure at least some minimum for degenerate narrow terminals
+    title_room = max(title_room, 20)
+
+    # Remaining budget for tags
+    tag_budget = WIDTH - left_w - title_room - gap_before_tags - gap_before_age - right_w
+    tag_budget = max(0, tag_budget)
+
     chips, chips_w = tags_as_chips(it.get("tags", []))
-
-    # Fixed-width pieces (visible widths)
-    # "  ● " = 4, "001 " = 4, title, "  " gap, tags, "  " gap, age, trailing " "
-    left_w = 2 + 1 + 1 + 3 + 1  # indent + dot + space + id + space
-    right_w = len(age) + 1      # age + trailing space
-
-    # Tags + gap take up: 2 + chips_w (if any)
-    tags_budget = (2 + chips_w) if chips_w else 0
-
-    # Remaining room for title
-    title_room = WIDTH - left_w - tags_budget - right_w - 2  # - 2 for gap before age
-    if title_room < 10:
-        # Squeeze tags first
-        chips, chips_w = "", 0
-        tags_budget = 0
-        title_room = WIDTH - left_w - right_w - 2
+    if chips_w > tag_budget:
+        # Truncate chip string to budget by rebuilding with shorter tag text
+        raw_tags = it.get("tags", [])
+        if isinstance(raw_tags, list):
+            # Join with plain ' · ' first, truncate as plain text, then colorize as-is
+            plain = " · ".join(str(t) for t in raw_tags if t)
+        elif isinstance(raw_tags, str):
+            plain = raw_tags
+        else:
+            plain = ""
+        if len(plain) > tag_budget:
+            plain = plain[: max(1, tag_budget - 1)] + "…"
+        chips = f"{META}{plain}{RESET}"
+        chips_w = len(plain)
 
     if len(title) > title_room:
         title = title[: max(1, title_room - 1)] + "…"
-
     title_padded = title.ljust(title_room)
 
+    # Layout: [indent][dot id][title padded]  [spacer][chips][2sp][age]
+    # We want chips + age right-aligned; spacer fills the gap between title and chips.
+    right_block_w = (chips_w + gap_before_age + len(age)) if chips_w else len(age)
+    left_block_w = left_w + title_room
+    spacer_w = max(gap_before_tags, WIDTH - left_block_w - right_block_w - 1)
+
     if chips_w:
-        # Fill any extra space between title and chips; then 2 spaces, chips, 2 spaces, age
-        chip_pad = title_room - len(title)  # already padded, so 0; we want chips right after
         line = (
             f"  {dot} {BLU}{iid}{RESET}  "
-            f"{TITLE}{title}{RESET}"
-            f"{' ' * chip_pad}  "
+            f"{TITLE}{title_padded}{RESET}"
+            f"{' ' * spacer_w}"
             f"{chips}  "
             f"{DIM}{YEL}{age}{RESET}"
         )
     else:
         line = (
             f"  {dot} {BLU}{iid}{RESET}  "
-            f"{TITLE}{title_padded}{RESET}  "
+            f"{TITLE}{title_padded}{RESET}"
+            f"{' ' * spacer_w}"
             f"{DIM}{YEL}{age}{RESET}"
         )
     print(line)
