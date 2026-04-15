@@ -12,10 +12,23 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger athan-dial.github.io rebuild
+      - name: Debug — what can this token see?
         run: |
-          curl --fail -X POST \
-            -H "Accept: application/vnd.github+json" \
+          echo "--- GET /user (token owner) ---"
+          curl -s -o /tmp/user.json -w "HTTP %{http_code}\n" \
+            -H "Authorization: Bearer ${{ secrets.SITE_DISPATCH_TOKEN }}" \
+            https://api.github.com/user
+          jq -r '"login=" + (.login // "null") + " type=" + (.type // "null")' /tmp/user.json || cat /tmp/user.json
+          echo ""
+          echo "--- GET /repos/athan-dial/athan-dial.github.io (repo access) ---"
+          curl -s -o /tmp/repo.json -w "HTTP %{http_code}\n" \
+            -H "Authorization: Bearer ${{ secrets.SITE_DISPATCH_TOKEN }}" \
+            https://api.github.com/repos/athan-dial/athan-dial.github.io
+          jq -r '"name=" + (.full_name // "null") + " permissions=" + (.permissions // {} | tostring)' /tmp/repo.json || cat /tmp/repo.json
+          echo ""
+          echo "--- POST /dispatches ---"
+          curl -s -o /tmp/disp.json -w "HTTP %{http_code}\n" -X POST \
             -H "Authorization: Bearer ${{ secrets.SITE_DISPATCH_TOKEN }}" \
             https://api.github.com/repos/athan-dial/athan-dial.github.io/dispatches \
             -d '{"event_type":"skills-updated"}'
+          cat /tmp/disp.json
