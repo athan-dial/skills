@@ -97,14 +97,32 @@ Claude assigns priority based on conversation context. User can override during 
 
 ## /orc list
 
-Read BACKLOG.jsonl, display:
+Delegate to `scripts/list-backlog.sh` — it reads `.orc/backlog/BACKLOG.jsonl`, renders a
+framed Unicode dashboard with ANSI color (priority badges, relative age, tag chips, next-id
+hint), and auto-detects the backlog root by walking up from CWD. Zero model tokens consumed
+during render — the harness streams the script's stdout directly.
+
+```bash
+bash scripts/list-backlog.sh              # open items (default)
+bash scripts/list-backlog.sh --all        # open + archived sections
+bash scripts/list-backlog.sh --archived   # archived only
+bash scripts/list-backlog.sh --compact    # tab-separated, pipe-friendly
+bash scripts/list-backlog.sh --root PATH  # override backlog location
+```
+
+Example output:
 
 ```
-.orc backlog (3 items)
-  001  p1  Add Redis cache layer          [performance, infra]     2d ago
-  002  p2  Migrate auth to OAuth2              [auth, security]   2d ago
-  003  p2  Seed org synonyms from ROR             [catalog, org-er]        2d ago
+╭─ Backlog — open · 3 items ──────────────────────────────────────────────╮
+│ 001   p1  Add Redis cache layer                    2d   performance inf… │
+│ 002   p2  Migrate auth to OAuth2                   2d   auth security    │
+│ 003   p2  Seed org synonyms from ROR               2d   catalog org-er   │
+╰──────────────────────────────────────────────────────────────────────────╯
+  /orc pick <id>  →  promote to plan     /orc drop <id>  →  archive     next id: 004
 ```
+
+Priority color: p1=red bold, p2=yellow bold, p3=dim. Age is dim yellow. Tags are dim.
+Width adapts to terminal (clamped 60–120 cols). Respects `NO_COLOR=1`.
 
 ## /orc triage
 
