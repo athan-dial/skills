@@ -1,18 +1,13 @@
-# Changelog
+---
+title: "Changelog"
+weight: 50
+---
 
 All notable changes to the `orc` plugin are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 **Pre-1.0 policy:** breaking changes ship as MINOR bumps (and are called out under **Breaking** below). Post-1.0, breaking changes will require a MAJOR bump.
 
 ## [Unreleased]
-
-## [0.5.0] — 2026-04-16
-
-### Added
-- `plugins/orc/site/` — bespoke dark-mode-default landing page for `athandial.com/skills/orc/`. Terminal-native aesthetic: monospace type, violet accent, staggered-wave ASCII animation. Includes install command, "What's here" cards linking into docs.
-- `plugins/orc/justfile` — Zensical build + stage + prod-build recipes, matching the template contract (`bin/build-plugin-site orc` produces `dist/orc-site-0.5.0.tar.gz`).
-- `docs/zensical.toml`, `docs/changelog.md`, `docs/stylesheets/orc.css` — complete Zensical doc-site config, auto-generated changelog, per-plugin CSS overrides.
-- Transitional Hugo bundles at `athandial.com/skills/orc/` removed; the subsite is now served from release-asset tarballs, matching folio's pipeline.
 
 ## [0.4.0] — 2026-04-15
 
@@ -22,7 +17,7 @@ All notable changes to the `orc` plugin are documented here. Format follows [Kee
 ## [0.3.1] — 2026-04-15
 
 ### Changed
-- Internal: unified handoff state directory on `.orc/` (was `.orchestrate/`). All handoff artifacts (`HANDOFF.md`, `state.json`, `AUTO-RESUME.txt`, `tasks.json`) now live alongside `.orc/backlog/` and `.orc/plans/` in a single per-repo state dir. Updated `handoff/` scripts and `SKILL.md` accordingly. Existing `.orchestrate/` dirs in user repos are not auto-migrated — `checkpoint.sh` will simply start writing to `.orc/` next run.
+- Internal: unified handoff state directory on `.orc/` (was `.orchestrate/`). All handoff artifacts (`HANDOFF.md`, `state.json`, `AUTO-RESUME.txt`, `tasks.json`) now live alongside `.orc/backlog/` and `.orc/plans/` in a single per-repo state dir. Existing `.orchestrate/` dirs in user repos are not auto-migrated — `checkpoint.sh` will simply start writing to `.orc/` next run.
 - Refreshed stale `orc:plan` references to `orc:orchestrate` across SKILL.md frontmatter descriptions (all seven skills), `install.sh` banner, `CLAUDE.md`, and the `orchestrate/` prose that still pointed at the pre-0.2 command name. Also corrected `orchestrate/SKILL.md`'s "Part of the orc system" line which still listed the pre-consolidation names `orc:add / orc:list / orc:pick` (rolled into `orc:backlog` in 0.1.0).
 
 ## [0.3.0] — 2026-04-15

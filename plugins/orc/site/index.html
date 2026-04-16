@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>orc &mdash; Multi-agent orchestration for Claude Code</title>
+  <meta name="description" content="Break complex work into parallel sub-tasks dispatched to Cursor, Codex, or Claude subagents. Wave-based execution, persistent state, clean handoff between sessions.">
+
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<!-- HEADER_STRIP -->
+
+<button class="theme-toggle" aria-label="Toggle theme" type="button">
+  <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<main>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <div class="kicker">orchestrate → dispatch → wait → merge</div>
+        <h1>orc</h1>
+        <p class="tagline">Multi-agent orchestration for Claude Code</p>
+        <p class="lede">Break complex work into parallel sub-tasks dispatched to Cursor, Codex, or Claude subagents. Wave-based execution, persistent state, clean handoff between sessions.</p>
+
+        <div class="install" role="group" aria-label="Install orc">
+          <div class="install-label">Install</div>
+          <code class="install-code">claude plugin install athan-dial/skills:orc</code>
+          <div class="install-hint">Then run <code>/orc:orchestrate</code> inside Claude Code.</div>
+        </div>
+
+        <div class="cta-row">
+          <a class="cta" href="docs/quickstart/">Read quickstart</a>
+          <a class="cta cta-ghost" href="docs/reference/commands/">Browse commands</a>
+        </div>
+      </div>
+
+      <div class="hero-ascii" aria-label="Wave-based parallel execution diagram">
+        <div class="ascii-title">waves</div>
+        <pre class="wave-diagram"><code><span class="wave-line l1">Wave 1  ┌─ task A ─┐   ┌─ task B ─┐   ┌─ task C ─┐</span>
+<span class="wave-line l2">        │  codex   │   │  cursor  │   │  claude  │</span>
+<span class="wave-line l3">        └──────────┘   └──────────┘   └──────────┘</span>
+<span class="wave-line l4">                    ↓ wait for all ↓</span>
+<span class="wave-line l5">Wave 2  ┌─ task D ─────────────┐   ┌─ task E ─┐</span>
+<span class="wave-line l6">        │  cursor              │   │  codex   │</span>
+<span class="wave-line l7">        └──────────────────────┘   └──────────┘</span></code></pre>
+        <div class="ascii-sub">One wave at a time. Parallel lanes within a wave. Advance when the whole wave resolves.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="why">
+    <div class="container why-grid">
+      <div class="why-head">
+        <h2>Why orc</h2>
+        <p class="why-lede">Most sessions fail at the boundaries: ideas get lost, work gets serialized, and context rehydration is expensive. orc makes those boundaries cheap.</p>
+      </div>
+
+      <div class="why-cards">
+        <div class="why-card">
+          <div class="why-title">Wave-based execution</div>
+          <div class="why-body">Fan out within a wave, then advance only when the whole wave resolves. Simple enough to debug, powerful enough to parallelize real work.</div>
+        </div>
+        <div class="why-card">
+          <div class="why-title">Persistent state</div>
+          <div class="why-body">State lives on disk under <code>.orc/</code>. If your session resets, you don’t start over — you resume.</div>
+        </div>
+        <div class="why-card">
+          <div class="why-title">Clean handoff</div>
+          <div class="why-body">Checkpoint at the end of a session with <code>/orc:handoff</code>. Next time, <code>/orc:recap</code> gets you back to “what matters” fast.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="whats-here">
+    <div class="container">
+      <h2>What’s here</h2>
+      <div class="cards">
+        <a class="card" href="docs/quickstart/">
+          <div class="card-title">Quickstart</div>
+          <div class="card-body">From install → first wave → clean handoff, in minutes.</div>
+        </a>
+        <a class="card" href="docs/reference/commands/">
+          <div class="card-title">Commands</div>
+          <div class="card-body">The slash-command surface, generated from `commands/`.</div>
+        </a>
+        <a class="card" href="docs/architecture/">
+          <div class="card-title">Architecture</div>
+          <div class="card-body">Wave execution, state files, and how orc stays resumable.</div>
+        </a>
+        <a class="card" href="docs/changelog/">
+          <div class="card-title">Changelog</div>
+          <div class="card-body">Versioned notes and breaking-change policy.</div>
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-left">
+      <span class="footer-brand">orc</span>
+      <span class="footer-muted"> &mdash; Multi-agent orchestration for Claude Code</span>
+    </div>
+    <div class="footer-right">
+      <a href="https://github.com/athan-dial/skills/tree/main/plugins/orc">Source on GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var toggle = document.querySelector('.theme-toggle');
+  var html = document.documentElement;
+  var storageKey = 'orc-theme';
+
+  var saved = localStorage.getItem(storageKey);
+  if (saved) html.setAttribute('data-theme', saved);
+
+  toggle.addEventListener('click', function() {
+    var current = html.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem(storageKey, next);
+  });
+
+  // Keep default as dark unless user explicitly toggles.
+})();
+</script>
+</body>
+</html>

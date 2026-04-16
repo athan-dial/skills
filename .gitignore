@@ -1,3 +1,6 @@
 .orc/
 tools/venv/
 dist/
+plugins/*/docs/site/
+plugins/*/site/docs/
+*.toml.bak

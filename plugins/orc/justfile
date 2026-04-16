@@ -1,0 +1,68 @@
+# orc — plugin site build and preview
+#
+# Recipes:
+#   docs-build   — Zensical build of docs/ into docs/site/
+#   docs-stage   — copy built docs into site/docs/ so landing can link to /docs/
+#   docs-serve   — live-reload docs for editing (no landing page)
+#   site-serve   — serve full site/ (landing + docs/) on site_port
+#   serve        — alias for site-serve
+#   open         — open landing in default browser
+#   open-docs    — open docs server in default browser
+#   prod-build   — CI production build with SITE_URL baked in (used by bin/build-plugin-site)
+
+# Zensical binary — absolute path into the repo-local venv (skills/tools/venv/,
+# pinned in skills/tools/requirements.txt). Override with ZENSICAL_BIN=... if needed.
+zensical := env("ZENSICAL_BIN", justfile_directory() / "../../tools/venv/bin/zensical")
+docs_port := "8100"
+site_port := "8200"
+
+# Build documentation site
+docs-build:
+    cd docs && {{zensical}} build
+
+# Copy built docs into site/docs/ so product page can link to /docs/
+docs-stage: docs-build
+    rm -rf site/docs
+    cp -r docs/site site/docs
+
+# Serve docs standalone with hot reload (for doc editing)
+docs-serve:
+    cd docs && {{zensical}} serve --dev-addr 127.0.0.1:{{docs_port}}
+
+# Serve the full site (product page + docs at /docs/)
+site-serve: docs-stage
+    @echo "orc → http://127.0.0.1:{{site_port}} (docs at /docs/)"
+    cd site && python3 -m http.server {{site_port}} --bind 127.0.0.1
+
+# Build and serve everything
+serve: site-serve
+
+# Open product page in default browser
+open:
+    open http://127.0.0.1:{{site_port}}
+
+# Open docs in default browser
+open-docs:
+    open http://127.0.0.1:{{docs_port}}
+
+# Production build — CI invokes this to produce a shippable site/ dir.
+# Requires SITE_URL env var (baked into Zensical — zensical 0.0.x reads site_url from
+# zensical.toml only, not from the environment, so we patch the TOML around the build).
+prod-build:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -z "${SITE_URL:-}" ]; then echo "SITE_URL required"; exit 1; fi
+    ROOT="{{justfile_directory()}}"
+    bash "$ROOT/../../bin/gen-commands-doc" "$(basename "$ROOT")"
+    DOCS_TOML="$ROOT/docs/zensical.toml"
+    BAK="$ROOT/docs/zensical.toml.bak"
+    cp "$DOCS_TOML" "$BAK"
+    restore() { mv -f "$BAK" "$DOCS_TOML"; }
+    trap restore EXIT
+    D="$DOCS_TOML" python3 -c 'import pathlib,os,json;p=pathlib.Path(os.environ["D"]);u=os.environ["SITE_URL"];t=p.read_text();assert "site_url = \"\"" in t;p.write_text(t.replace("site_url = \"\"", "site_url = "+json.dumps(u),1))'
+    (cd "$ROOT/docs" && "{{zensical}}" build)
+    trap - EXIT
+    restore
+    rm -rf "$ROOT/site/docs"
+    cp -r "$ROOT/docs/site" "$ROOT/site/docs"
+    echo "prod-build complete → site/ ready to tar"
