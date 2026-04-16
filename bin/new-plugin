@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: bin/new-plugin <plugin-name> [--tagline \"...\"] [--description \"...\"]" >&2
+  exit 1
+}
+
+err() {
+  echo "new-plugin: $*" >&2
+  exit 1
+}
+
+sed_escape() {
+  printf '%s' "$1" | sed -e 's/[&|\\]/\\&/g'
+}
+
+script_dir=$(cd "$(dirname "$0")" && pwd)
+repo_root=$(cd "$script_dir/.." && pwd)
+
+[ "$#" -ge 1 ] || usage
+
+plugin_name=$1
+shift
+tagline=""
+description=""
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --tagline)
+      [ "$#" -ge 2 ] || err "--tagline requires a value"
+      tagline=$2
+      shift 2
+      ;;
+    --description)
+      [ "$#" -ge 2 ] || err "--description requires a value"
+      description=$2
+      shift 2
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+if ! printf '%s' "$plugin_name" | grep -Eq '^[a-z][a-z0-9-]*$'; then
+  err "plugin name must match ^[a-z][a-z0-9-]*$"
+fi
+
+template_dir="$repo_root/plugins/_template"
+plugin_dir="$repo_root/plugins/$plugin_name"
+
+[ -d "$template_dir" ] || err "missing template scaffold at plugins/_template"
+[ ! -e "$plugin_dir" ] || err "plugins/$plugin_name already exists"
+
+cp -R "$template_dir" "$plugin_dir"
+mkdir -p "$plugin_dir/.claude-plugin"
+
+escaped_name=$(sed_escape "$plugin_name")
+escaped_tagline=$(sed_escape "$tagline")
+escaped_description=$(sed_escape "$description")
+
+# Rewrite the scaffold placeholders in place using sed -i.bak for BSD/GNU compatibility.
+find "$plugin_dir" -type f ! -path '*/.claude-plugin/plugin.json' | while IFS= read -r file; do
+  sed -i.bak \
+    -e "s|{{PLUGIN_NAME}}|$escaped_name|g" \
+    -e "s|{{PLUGIN_TAGLINE}}|$escaped_tagline|g" \
+    -e "s|{{PLUGIN_DESCRIPTION}}|$escaped_description|g" \
+    "$file"
+  rm -f "$file.bak"
+done
+
+plugin_json="$plugin_dir/.claude-plugin/plugin.json"
+plugin_json_tmp="$plugin_json.tmp"
+PLUGIN_NAME="$plugin_name" PLUGIN_DESCRIPTION="$description" python3 - "$plugin_json_tmp" <<'PY'
+import json
+import os
+import sys
+
+payload = {
+    "name": os.environ["PLUGIN_NAME"],
+    "description": os.environ["PLUGIN_DESCRIPTION"],
+    "version": "0.1.0",
+    "author": {
+        "name": "Athan Dial",
+        "url": "https://github.com/athan-dial",
+    },
+}
+
+with open(sys.argv[1], "w", encoding="utf-8") as fh:
+    json.dump(payload, fh, indent=2)
+    fh.write("\n")
+PY
+mv "$plugin_json_tmp" "$plugin_json"
+
+file_count=$(find "$plugin_dir" -type f | wc -l | tr -d ' ')
+
+echo "Created plugins/$plugin_name/ ($file_count files). Edit site/index.html, site/styles.css, docs/*.md, and fill in the {{PLACEHOLDER}} spots where --tagline/--description were empty. Then: just -C plugins/$plugin_name/ site-serve."

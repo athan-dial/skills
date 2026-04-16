@@ -1,9 +1,17 @@
-# Folio — build and preview commands
+# {{PLUGIN_NAME}} — plugin site build and preview
+#
+# Recipes:
+#   docs-build   — Zensical build of docs/ into docs/site/
+#   docs-stage   — copy built docs into site/docs/ so landing can link to /docs/
+#   docs-serve   — live-reload docs for editing (no landing page)
+#   site-serve   — serve full site/ (landing + docs/) on site_port
+#   serve        — alias for site-serve
+#   open         — open landing in default browser
+#   open-docs    — open docs server in default browser
+#   prod-build   — CI production build with SITE_URL baked in (used by bin/build-plugin-site)
 
 # Zensical binary — absolute path into the repo-local venv (skills/tools/venv/,
-# pinned in skills/tools/requirements.txt). Using justfile_directory() so recipes
-# that `cd` into subdirs (docs/, site/) still resolve the binary correctly.
-# Override with ZENSICAL_BIN=/path/to/zensical if needed.
+# pinned in skills/tools/requirements.txt). Override with ZENSICAL_BIN=... if needed.
 zensical := env("ZENSICAL_BIN", justfile_directory() / "../../tools/venv/bin/zensical")
 docs_port := "8100"
 site_port := "8200"
@@ -23,7 +31,7 @@ docs-serve:
 
 # Serve the full site (product page + docs at /docs/)
 site-serve: docs-stage
-    @echo "Folio → http://127.0.0.1:{{site_port}} (docs at /docs/)"
+    @echo "{{PLUGIN_NAME}} → http://127.0.0.1:{{site_port}} (docs at /docs/)"
     cd site && python3 -m http.server {{site_port}} --bind 127.0.0.1
 
 # Build and serve everything
@@ -58,39 +66,3 @@ prod-build:
     rm -rf "$ROOT/site/docs"
     cp -r "$ROOT/docs/site" "$ROOT/site/docs"
     echo "prod-build complete → site/ ready to tar"
-
-# Validate workspace inputs (smoke test the scripts)
-validate workspace:
-    python3 scripts/validate_inputs.py {{workspace}}
-
-# Check all artifacts in a workspace
-check workspace:
-    python3 scripts/check_artifacts.py {{workspace}}
-
-# Classify materials in a workspace
-classify workspace:
-    python3 scripts/classify_materials.py {{workspace}}
-
-# Route mode for a workspace
-route workspace:
-    python3 scripts/route_mode.py {{workspace}}
-
-# Run the full prep pipeline (classify → route → validate)
-prep workspace: (classify workspace) (route workspace) (validate workspace)
-    @echo "Prep pipeline complete."
-
-# Scan for IP/redline violations
-scan workspace:
-    python3 scripts/scan_redlines.py {{workspace}}
-
-# Compile final LaTeX package
-compile workspace:
-    bash scripts/compile_package.sh {{workspace}}
-
-# Package exports for delivery
-package workspace:
-    python3 scripts/package_exports.py {{workspace}}
-
-# Full export pipeline: scan → compile → package
-export workspace: (scan workspace) (compile workspace) (package workspace)
-    @echo "Export pipeline complete."

@@ -1,0 +1,9 @@
+/* Per-plugin docs overrides. Extend tokens from shared/tokens.css.
+ * Examples of things to add here:
+ *   - Custom palette tweaks (--color-bg, --color-accent)
+ *   - Plugin-specific font pairings (--font-sans, --font-serif)
+ *   - Doc-site hero / admonition / code-block styling
+ *
+ * Anything that should apply to BOTH docs and landing belongs in
+ * shared/tokens.css at the skills-repo root, not here.
+ */

@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: bin/build-plugin-site <plugin-name>" >&2
+  exit 1
+}
+
+err() {
+  echo "build-plugin-site: $*" >&2
+  exit 1
+}
+
+extract_version() {
+  sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1" | head -n 1
+}
+
+sed_escape() {
+  printf '%s' "$1" | sed -e 's/[&|\\]/\\&/g'
+}
+
+script_dir=$(cd "$(dirname "$0")" && pwd)
+repo_root=$(cd "$script_dir/.." && pwd)
+
+[ "$#" -eq 1 ] || usage
+
+plugin_name=$1
+plugin_dir="$repo_root/plugins/$plugin_name"
+site_dir="$plugin_dir/site"
+docs_dir="$plugin_dir/docs"
+justfile_path="$plugin_dir/justfile"
+plugin_json="$plugin_dir/.claude-plugin/plugin.json"
+
+[ -d "$plugin_dir" ] || err "plugins/$plugin_name does not exist"
+[ -d "$site_dir" ] || err "plugins/$plugin_name/site is missing"
+[ -d "$docs_dir" ] || err "plugins/$plugin_name/docs is missing"
+[ -f "$justfile_path" ] || err "plugins/$plugin_name/justfile is missing"
+[ -f "$plugin_json" ] || err "plugins/$plugin_name/.claude-plugin/plugin.json is missing"
+
+version=$(extract_version "$plugin_json")
+[ -n "$version" ] || err "could not extract version from plugins/$plugin_name/.claude-plugin/plugin.json"
+
+"$script_dir/gen-commands-doc" "$plugin_name"
+
+index_path="$site_dir/index.html"
+header_template="$repo_root/shared/header-strip.html"
+[ -f "$index_path" ] || err "plugins/$plugin_name/site/index.html is missing"
+[ -f "$header_template" ] || err "shared/header-strip.html is missing"
+
+tmp_header=$(mktemp)
+tmp_index=$(mktemp)
+backup_index=$(mktemp)
+restore_source() {
+  if [ -f "$backup_index" ]; then
+    cp "$backup_index" "$index_path"
+  fi
+  rm -f "$tmp_header" "$tmp_index" "$backup_index"
+}
+trap restore_source EXIT
+
+cp "$index_path" "$backup_index"
+sed "s|{{PLUGIN_NAME}}|$(sed_escape "$plugin_name")|g" "$header_template" > "$tmp_header"
+
+# Build against a temporary landing page so the checked-in template remains unchanged.
+python3 - "$index_path" "$tmp_header" "$tmp_index" <<'PY'
+import pathlib
+import sys
+
+index_path = pathlib.Path(sys.argv[1])
+header_path = pathlib.Path(sys.argv[2])
+output_path = pathlib.Path(sys.argv[3])
+
+marker = "<!-- HEADER_STRIP -->"
+index_text = index_path.read_text(encoding="utf-8")
+header_text = header_path.read_text(encoding="utf-8").rstrip("\n")
+
+if marker in index_text:
+    output_text = index_text.replace(marker, header_text)
+else:
+    output_text = index_text
+
+output_path.write_text(output_text, encoding="utf-8")
+PY
+
+cp "$tmp_index" "$index_path"
+
+export SITE_URL="https://athandial.com/skills/$plugin_name/docs/"
+just --justfile "$justfile_path" --working-directory "$plugin_dir" prod-build
+
+dist_dir="$repo_root/dist"
+mkdir -p "$dist_dir"
+archive_path="$dist_dir/$plugin_name-site-$version.tar.gz"
+tar -czf "$archive_path" -C "$plugin_dir" site/
+
+size=$(du -sh "$archive_path" | cut -f1)
+echo "Built dist/$plugin_name-site-$version.tar.gz ($size)"

@@ -6,6 +6,11 @@ All notable changes to the `orc` plugin are documented here. Format follows [Kee
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-15
+
+### Changed
+- Monorepo milestone (no orc code changes). Shipped the plugin-subsite template system at `plugins/_template/` + shared cohesion artifacts at `shared/` (tokens.css, header-strip.html), matrix CI workflow at `.github/workflows/build-plugin-sites.yml`, and three generators at `bin/` (`new-plugin`, `build-plugin-site`, `gen-commands-doc`). Site repo rewired to consume release-asset tarballs instead of Hugo bundles. Next (stage 3): instantiate the template for orc and cut over the transitional Hugo bundles for `athandial.com/skills/orc/`.
+
 ## [0.3.1] — 2026-04-15
 
 ### Changed

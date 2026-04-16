@@ -1,0 +1,103 @@
+/* athan-dial/skills shared design tokens
+ * ============================================
+ * Imported by every plugin landing page AND the parent Hugo theme
+ * so athandial.com stays visually coherent across subsites.
+ *
+ * Plugin authors override any of these per-plugin (e.g. folio's
+ * parchment palette, orc's conductor theme) — but inherit by default.
+ *
+ * Source: /Users/adial/Github/skills/shared/tokens.css
+ */
+
+:root {
+  /* — Palette (light) — */
+  --color-ink:       #1a1a1a;
+  --color-ink-muted: #525252;
+  --color-ink-faint: #a3a3a3;
+  --color-bg:        #ffffff;
+  --color-bg-soft:   #f5f5f4;
+  --color-bg-deep:   #e7e5e4;
+  --color-accent:    #2563eb;
+  --color-accent-soft: #dbeafe;
+  --color-border:    #e5e5e5;
+  --color-code-bg:   #f5f5f4;
+
+  /* — Type — */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+
+  --scale-xs:  0.75rem;
+  --scale-sm:  0.875rem;
+  --scale-base: 1rem;
+  --scale-lg:  1.125rem;
+  --scale-xl:  1.25rem;
+  --scale-2xl: 1.5rem;
+  --scale-3xl: 2rem;
+  --scale-4xl: 2.75rem;
+  --scale-5xl: 3.75rem;
+
+  --line-tight: 1.25;
+  --line-normal: 1.55;
+  --line-relaxed: 1.75;
+
+  /* — Spacing — */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  /* — Shape — */
+  --radius-sm: 3px;
+  --radius:    6px;
+  --radius-lg: 10px;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow:    0 2px 8px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+
+  --transition: 180ms ease;
+
+  /* — Layout — */
+  --content-max: 72ch;
+  --page-max:    1180px;
+}
+
+[data-theme="dark"],
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-ink:       #f5f5f4;
+    --color-ink-muted: #a8a29e;
+    --color-ink-faint: #57534e;
+    --color-bg:        #0c0a09;
+    --color-bg-soft:   #1c1917;
+    --color-bg-deep:   #292524;
+    --color-accent:    #60a5fa;
+    --color-accent-soft: rgba(96, 165, 250, 0.14);
+    --color-border:    #292524;
+    --color-code-bg:   #1c1917;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.32);
+    --shadow:    0 2px 8px rgba(0,0,0,0.40);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.48);
+  }
+}
+
+/* Explicit [data-theme="dark"] override (for manual toggle) */
+[data-theme="dark"] {
+  --color-ink:       #f5f5f4;
+  --color-ink-muted: #a8a29e;
+  --color-ink-faint: #57534e;
+  --color-bg:        #0c0a09;
+  --color-bg-soft:   #1c1917;
+  --color-bg-deep:   #292524;
+  --color-accent:    #60a5fa;
+  --color-accent-soft: rgba(96, 165, 250, 0.14);
+  --color-border:    #292524;
+  --color-code-bg:   #1c1917;
+}

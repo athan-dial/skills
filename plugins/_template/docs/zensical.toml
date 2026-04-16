@@ -1,0 +1,55 @@
+[project]
+site_name = "{{PLUGIN_NAME}}"
+site_url = ""
+docs_dir = "."
+site_dir = "site"
+
+extra_css = ["stylesheets/plugin.css"]
+
+[project.extra]
+homepage = ""
+
+nav = [
+  { "Home" = "index.md" },
+  { "Quickstart" = "quickstart.md" },
+  { "Architecture" = "architecture.md" },
+  { "Reference" = [
+    { "Commands" = "reference/commands.md" },
+  ]},
+  { "Changelog" = "changelog.md" },
+]
+
+[project.theme]
+language = "en"
+
+features = [
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    "navigation.path",
+    "navigation.sections",
+    "navigation.top",
+    "navigation.tracking",
+    "content.code.copy",
+    "content.code.annotate",
+    "search.highlight",
+]
+
+[project.theme.font]
+text = "Inter"
+code = "JetBrains Mono"
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"

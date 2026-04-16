@@ -1,0 +1,121 @@
+name: Build Plugin Sites
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "plugins/**"
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  detect-changed-plugins:
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.detect.outputs.plugins }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: detect
+        name: Detect plugins to build
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          event_name="${GITHUB_EVENT_NAME}"
+          plugins_json='[]'
+
+          list_all_plugins() {
+            find plugins -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
+              | grep -v '^_template$' \
+              | sort -u
+          }
+
+          if [[ "${event_name}" == "workflow_dispatch" ]]; then
+            plugins_json="$(list_all_plugins | python3 -c 'import json,sys; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))')"
+          elif [[ "${event_name}" == "release" ]]; then
+            tag_name="${{ github.event.release.tag_name }}"
+            if [[ "${tag_name}" =~ ^([A-Za-z0-9._-]+)-v.+$ ]]; then
+              plugin="${BASH_REMATCH[1]}"
+              if [[ "${plugin}" != "_template" && -d "plugins/${plugin}" ]]; then
+                plugins_json="$(printf '[\"%s\"]' "${plugin}")"
+              fi
+            fi
+          elif [[ "${event_name}" == "push" ]]; then
+            before_sha="${{ github.event.before }}"
+            after_sha="${{ github.sha }}"
+
+            if [[ -n "${before_sha}" && "${before_sha}" != "0000000000000000000000000000000000000000" ]]; then
+              diff_range="${before_sha}..${after_sha}"
+              changed_files="$(git diff --name-only "${diff_range}")"
+            else
+              changed_files="$(git diff-tree --no-commit-id --name-only -r "${after_sha}")"
+            fi
+
+            plugins_json="$(
+              printf '%s\n' "${changed_files}" \
+                | awk -F/ '/^plugins\/[^/]+\// {print $2}' \
+                | grep -v '^_template$' \
+                | sort -u \
+                | python3 -c 'import json,sys; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))'
+            )"
+          fi
+
+          echo "plugins=${plugins_json}" >> "${GITHUB_OUTPUT}"
+          echo "Selected plugins: ${plugins_json}"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: detect-changed-plugins
+    if: needs.detect-changed-plugins.outputs.plugins != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJson(needs.detect-changed-plugins.outputs.plugins) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create tools virtualenv
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv tools/venv
+          tools/venv/bin/pip install -r tools/requirements.txt
+
+      - uses: extractions/setup-just@v2
+
+      - name: Build plugin site
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash bin/build-plugin-site "${{ matrix.plugin }}"
+
+      - name: Upload workflow artifact
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.plugin }}-site-${{ github.sha }}
+          path: dist/${{ matrix.plugin }}-site-*.tar.gz
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Attach release asset
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ matrix.plugin }}-site-*.tar.gz
