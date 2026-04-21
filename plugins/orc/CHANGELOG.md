@@ -39,7 +39,7 @@ All notable changes to the `orc` plugin are documented here. Format follows [Kee
 - Seven `/orc:*` slash command wrappers in `plugins/orc/commands/` — `orchestrate`, `backlog`, `status`, `scope`, `recap`, `handoff`, `autoresearch`. Makes orc skills tab-completable as first-class slash commands instead of Skill-tool-only.
 
 ### Changed
-- **Breaking:** renamed the `plan` skill → `orchestrate` (and its dir `plugins/orc/skills/plan/` → `plugins/orc/skills/orchestrate/`). Invoke as `/orc:orchestrate` instead of `/orc:plan`. Rationale: "plan" collides semantically with Claude-native plan mode (Shift+Tab) and reads as planning rather than multi-agent execution.
+- **Breaking:** renamed the `orchestrate` skill → `dispatch` (and its dir `plugins/orc/skills/orchestrate/` → `plugins/orc/skills/dispatch/`). Invoke as `/orc:dispatch`. `/orc:orchestrate` remains as an alias for compatibility.
 
 ## [0.1.0] — 2026-04-14
 

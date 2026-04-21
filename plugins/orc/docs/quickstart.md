@@ -43,7 +43,7 @@ Reads the backlog entry, explores the relevant code, asks 1–2 clarifying quest
 ## 5. Dispatch in parallel
 
 ```text
-/orc:orchestrate
+/orc:dispatch
 ```
 
 Picks up the latest scoped plan, decomposes it into dependency-ordered waves, dispatches each wave's tasks in parallel to the chosen executors, polls for completion, reviews diffs, and advances. State persists to `.orc/state.json` so a crash or `/clear` doesn't lose progress.

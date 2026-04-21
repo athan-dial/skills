@@ -16,7 +16,8 @@ Start a new Claude Code session and type `/orc:` to tab-complete all seven comma
 
 | Command | What it does |
 |---------|-------------|
-| `/orc:orchestrate` | Decompose work into dependency-ordered waves, dispatch to Cursor / Codex / Claude in parallel |
+| `/orc:dispatch` | Decompose work into dependency-ordered waves, dispatch to Cursor / Codex / Claude in parallel |
+| `/orc:orchestrate` | Alias for `/orc:dispatch` (legacy name) |
 | `/orc:backlog` | Capture ideas with rich context; list, triage, pick, promote |
 | `/orc:scope` | Shape a backlog item or freeform idea into a scoped plan |
 | `/orc:autoresearch` | Karpathy-style autonomous hill-climbing loop on any scalar metric |
@@ -32,7 +33,7 @@ See [the commands reference](https://athandial.com/skills/orc/commands/) for arg
 /orc:recap                    where did I leave off?
 /orc:backlog add <idea>       capture mid-session
 /orc:scope 001                shape into a plan
-/orc:orchestrate              dispatch and run autonomously
+/orc:dispatch                 dispatch and run autonomously
 /orc:autoresearch <metric>    loop on a sticky metric
 /orc:handoff                  save state before ending
 ```

@@ -76,7 +76,7 @@ HANDOFF="$DIR/HANDOFF.md"
     echo
     echo "Re-attach with:"
     echo '```bash'
-    echo "zsh ~/.claude/skills/orchestrate/scripts/poll-wave.sh \\"
+    echo "zsh ~/.claude/plugins/marketplaces/athan-dial-skills/plugins/orc/skills/dispatch/scripts/poll-wave.sh \\"
     printf '%s\n' "$INFLIGHT_RAW" | awk 'NF>0 {printf "  %s%s\n", $0, (NR==N?"":" \\")}' N=$(printf '%s\n' "$INFLIGHT_RAW" | awk 'NF>0' | wc -l | tr -d ' ')
     echo '```'
     echo
@@ -98,13 +98,13 @@ HANDOFF="$DIR/HANDOFF.md"
   echo "Receiving agent runs:"
   echo '```bash'
   echo "cd \"$REPO_ROOT\""
-  echo "bash ~/.claude/skills/orchestrate-handoff/scripts/resume.sh"
+  echo "bash ~/.claude/plugins/marketplaces/athan-dial-skills/plugins/orc/skills/handoff/scripts/resume.sh"
   echo '```'
   echo
   echo "Generate paste-ready prompts with:"
   echo '```bash'
-  echo "bash ~/.claude/skills/orchestrate-handoff/scripts/prepare-handoff.sh cursor"
-  echo "bash ~/.claude/skills/orchestrate-handoff/scripts/prepare-handoff.sh codex"
+  echo "bash ~/.claude/plugins/marketplaces/athan-dial-skills/plugins/orc/skills/handoff/scripts/prepare-handoff.sh cursor"
+  echo "bash ~/.claude/plugins/marketplaces/athan-dial-skills/plugins/orc/skills/handoff/scripts/prepare-handoff.sh codex"
   echo '```'
 } > "$HANDOFF"
 

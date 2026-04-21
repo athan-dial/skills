@@ -1,14 +1,14 @@
 ---
 name: handoff
 description: >
-  Persist and resume orc:orchestrate state to disk. ONLY invoke when: (1) the user explicitly says
+  Persist and resume orc:dispatch state to disk. ONLY invoke when: (1) the user explicitly says
   /orc:handoff, "checkpoint orchestration", "hand off", "resume orchestration",
   or "save orc state"; (2) CC displays an actual system usage-limit warning (not your
   guess that one is coming); (3) orc:orchestrate auto-calls checkpoint after a wave completes;
   (4) a fresh session needs to resume a prior orchestration via `resume`. Do NOT invoke because
   a session feels long, context feels large, or you think limits might be near. "Session is long"
   is never a trigger.
-  Part of the orc system: orc:orchestrate, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
+  Part of the orc system: orc:dispatch, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
 ---
 
 # Orchestrate Handoff

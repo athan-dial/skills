@@ -5,7 +5,7 @@ description: >
   backlog, and suggests what to work on next. Designed for cold-start: paste /orc:recap as first
   message in a new session. Use when: "orc recap", "orc:recap", "what did I do last time",
   "where did I leave off", "catch me up", or at the start of any new session.
-  Part of the orc system: orc:orchestrate, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
+  Part of the orc system: orc:dispatch, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
 ---
 
 # Orc: Recap

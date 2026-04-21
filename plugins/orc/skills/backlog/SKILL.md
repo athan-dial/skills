@@ -2,24 +2,24 @@
 name: backlog
 description: >
   Lightweight backlog for the orc system. Capture ideas with rich context mid-session,
-  triage later, promote to orc:orchestrate tasks. Lives at .orc/backlog/ in the repo.
+  triage later, promote to orc:dispatch tasks. Lives at .orc/backlog/ in the repo.
   Use when: "add to backlog", "orc add", "orc:add", "backlog this", "save this idea",
   "park this for later", "orc list", "orc:list", "orc triage", "orc:triage",
   "orc pick", "orc:pick", "what's in the backlog", "show me the backlog",
   or when the user ideates something worth capturing for a future session.
-  Part of the orc system: orc:orchestrate, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
+  Part of the orc system: orc:dispatch, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
 ---
 
 # Orc: Backlog
 
-Capture ideas mid-session with rich context. Triage and promote to `/orchestrate` later.
+TaskNotes-first capture + local cache view. Capture ideas mid-session with rich context, write to TaskNotes immediately, mirror to `.orc/backlog/` for fast session workflows, then promote to `/orc:dispatch`.
 
 ## Commands
 
 - `/orc add [idea]` — Capture an idea with context from current session
 - `/orc list` — Show backlog as a markdown table (renders natively in Claude Code UI)
 - `/orc triage` — Interactive: review items, re-prioritize, archive stale ones
-- `/orc pick [id]` — Load an item's full context and promote to `/orchestrate`
+- `/orc pick [id]` — Load an item's full context and promote to `/orc:dispatch`
 - `/orc drop [id]` — Archive an item (moves to `.orc/backlog/archive/`)
 
 ## Storage: `.orc/backlog/`
@@ -32,7 +32,7 @@ Capture ideas mid-session with rich context. Triage and promote to `/orchestrate
 │   │   ├── 001-cache-layer.md
 │   │   └── 002-multi-target-brief.md
 │   └── archive/            # Dropped/completed items
-└── state.json              # Active orchestration state (from /orchestrate-handoff)
+└── state.json              # Active dispatch state (from handoff)
 ```
 
 Add `.orc/` to `.gitignore` unless the user wants it tracked.
@@ -42,22 +42,41 @@ Add `.orc/` to `.gitignore` unless the user wants it tracked.
 Capture flow (zero questions — Claude infers everything):
 
 1. Parse the idea from args or recent conversation context
-2. Auto-assign next sequential ID from BACKLOG.jsonl
-3. Write rich item markdown (see template below)
-4. Append index line to BACKLOG.jsonl
-5. Confirm with one-line summary
+2. Create TaskNotes task via API:
+   - `POST http://localhost:8080/api/tasks` with at least:
+     - `title`
+     - `status: "todo"`
+     - `agent_tag: "claude-show"` (default per user)
+3. Best-effort set typed fields (via Obsidian CLI `property:set` on the returned task path, if available):
+   - `task_type: development_task`
+   - `admin_state: observed`
+   - `project_slug: <active project>` (if known)
+   - `source: orc_capture`
+4. Mirror locally:
+   - Auto-assign next sequential local `id` from `BACKLOG.jsonl` (cosmetic)
+   - Write rich item markdown (see template below) including `tasknotes_id`
+   - Append cache index line to `BACKLOG.jsonl`
+5. Trigger Multica projection (edge event): `bash skills/sync/scripts/bridge-trigger.sh --forward`
+6. Confirm with one-line summary including the TaskNotes id/path
 
 ### BACKLOG.jsonl format
 
 ```json
-{"id": "003", "title": "Seed org synonyms from ROR", "priority": "p2", "tags": ["catalog", "org-er"], "created": "2026-04-14", "status": "open"}
+{"id":"003","tasknotes_id":"100 Tasks/TaskNotes/Tasks/Seed org synonyms from ROR.md","title":"Seed org synonyms from ROR","priority":"p2","agent_tag":"claude-show","task_type":"development_task","admin_state":"observed","approval":"review","worker":"claude","project_slug":"talos","source":"orc_capture","plan_slug":null,"multica_id":null,"synced_at":"2026-04-21T15:00:00Z","status":"open"}
 ```
+
+Primary key is `tasknotes_id`. Local `id` is a display convenience.
 
 ### Item markdown template
 
 ```markdown
 # <Title>
 
+**tasknotes_id**: 100 Tasks/TaskNotes/Tasks/<...>.md
+**agent_tag**: claude-show
+**task_type**: development_task
+**admin_state**: observed
+**project_slug**: <slug>
 **Priority**: p1/p2/p3
 **Tags**: [tag1, tag2]
 **Created**: YYYY-MM-DD
@@ -106,13 +125,13 @@ Claude assigns priority based on conversation context. User can override during 
 4. Emit exactly this structure:
 
 ```markdown
-| # | P | Title | Tags | Age |
+| # | P | Tag | Title | Tags | Age |
 |---|---|-------|------|-----|
-| 001 | **p1** | Add Redis cache layer for hot paths | performance · infra | 2d |
-| 002 | **p1** | Migrate auth middleware to OAuth2 | auth · security | 5d |
-| 003 | p2 | Seed org synonyms from ROR | catalog · org-er | 1w |
-| 004 | p2 | Add p95 latency dashboard | observability | 2w |
-| 005 | p3 | Document Q4 retro learnings | meta | 3w |
+| 001 | **p1** | claude-run | Add Redis cache layer for hot paths | performance · infra | 2d |
+| 002 | **p1** | claude-show | Migrate auth middleware to OAuth2 | auth · security | 5d |
+| 003 | p2 | claude | Seed org synonyms from ROR | catalog · org-er | 1w |
+| 004 | p2 | — | Add p95 latency dashboard | observability | 2w |
+| 005 | p3 | — | Document Q4 retro learnings | meta | 3w |
 
 → `/orc pick <id>` promote · `/orc drop <id>` archive · next id **006**
 ```
@@ -144,30 +163,30 @@ Interactive review of open items:
 
 1. Display the list as a markdown table (same format as `/orc list`)
 2. For each item (or user-selected subset), ask: keep / reprioritize / drop / promote
-3. **Promote** = generate an `/orchestrate` prompt from the item's context and copy to clipboard
+3. **Promote** = generate a `/orc:dispatch` prompt from the item's context and copy to clipboard
 4. **Drop** = move to archive with reason
 
 ## /orc pick [id]
 
-The bridge to `/orchestrate`:
+The bridge to `/orc:dispatch`:
 
 1. Read the item's full markdown
 2. Read current codebase state relevant to the item's files
-3. Generate a complete `/orchestrate` prompt that includes:
+3. Generate a complete `/orc:dispatch` prompt that includes:
    - The item's context (from the markdown)
    - Current state delta (what changed since the item was captured)
    - Suggested task decomposition
    - Executor routing recommendations
 4. Present the prompt for confirmation, then either:
    - Copy to clipboard for a fresh session
-   - Or directly invoke `/orchestrate` in the current session
+   - Or directly invoke `/orc:dispatch` in the current session
 5. Move item to archive with `status: promoted`
 
-## Integration with /orchestrate
+## Integration with /orc:dispatch
 
-- `/orchestrate` should check `.orc/backlog/` at session start and mention if items exist
-- `/orchestrate-handoff` already writes to `.orc/state.json` — the backlog sits alongside it
-- When `/orchestrate` completes a task that matches a backlog item, auto-archive it
+- `/orc:dispatch` should check `.orc/backlog/` at session start and mention if items exist
+- `orc:handoff` writes to `.orc/state.json` — the backlog sits alongside it
+- When `/orc:dispatch` completes a task that matches a backlog item, auto-archive it
 
 ## Design principles
 

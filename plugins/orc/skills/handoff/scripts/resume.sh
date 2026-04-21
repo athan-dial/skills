@@ -7,7 +7,13 @@ set -u
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 STATE="$REPO_ROOT/.orc/state.json"
 HANDOFF="$REPO_ROOT/.orc/HANDOFF.md"
-POLLER="$HOME/.claude/skills/orchestrate/scripts/poll-wave.sh"
+POLLER=""
+for candidate in \
+  "$HOME/.claude/plugins/marketplaces/athan-dial-skills/plugins/orc/skills/dispatch/scripts/poll-wave.sh" \
+  "$HOME/.claude/skills/orc/skills/dispatch/scripts/poll-wave.sh" \
+  "$HOME/.claude/skills/dispatch/scripts/poll-wave.sh"; do
+  [ -x "$candidate" ] && POLLER="$candidate" && break
+done
 
 if [ ! -f "$STATE" ]; then
   echo "ERROR: $STATE not found. Nothing to resume." >&2

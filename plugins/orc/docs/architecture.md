@@ -8,7 +8,7 @@ weight: 30
 
 ## Wave-based dispatch
 
-A scoped plan is a list of tasks with dependencies. `/orc:orchestrate` topologically sorts them into **waves** — sets of tasks with no unsatisfied dependencies — and dispatches each wave's tasks in parallel.
+A scoped plan is a list of tasks with dependencies. `/orc:dispatch` topologically sorts them into **waves** — sets of tasks with no unsatisfied dependencies — and dispatches each wave's tasks in parallel.
 
 ```
 Wave 1: [A, B, C]   ← all start simultaneously
@@ -34,7 +34,7 @@ Everything lives in `.orc/` at the repo root:
 | `.orc/plans/NNN-slug.md` | Scoped plan files emitted by `/orc:scope`. |
 | `.orc/handoff/HANDOFF.md` | Latest checkpoint summary, written by `/orc:handoff`, read by `/orc:recap`. |
 
-State files are designed to be human-editable. If a task gets stuck, edit `state.json` directly and re-run `/orc:orchestrate` — it picks up where you left it.
+State files are designed to be human-editable. If a task gets stuck, edit `state.json` directly and re-run `/orc:dispatch` — it picks up where you left it.
 
 ## Executor routing
 

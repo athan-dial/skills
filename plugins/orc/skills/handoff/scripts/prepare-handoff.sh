@@ -23,7 +23,7 @@ case "$TARGET" in
     cat <<EOF
 === PASTE THIS INTO CURSOR AGENT MODE ===
 
-You are taking over an in-flight \`/orchestrate\` run from Claude Code, which hit its usage limit.
+You are taking over an in-flight \`/orc:dispatch\` run from Claude Code, which hit its usage limit.
 Worker daemons (Codex via codex-companion, Cursor agent jobs) may still be running on disk.
 
 Repo: $REPO_ROOT
@@ -31,14 +31,14 @@ Repo: $REPO_ROOT
 Step 1 — Read these in order:
   1. $HANDOFF
   2. $STATE
-  3. ~/.claude/skills/orchestrate/SKILL.md (for the workflow you're resuming)
+  3. ~/.claude/plugins/marketplaces/athan-dial-skills/plugins/orc/skills/dispatch/SKILL.md (for the workflow you're resuming)
 
 Step 2 — Run the resume script:
   cd "$REPO_ROOT"
   bash ~/.claude/skills/orchestrate-handoff/scripts/resume.sh
 
 Step 3 — Re-attach to in-flight jobs (resume.sh prints the exact poll-wave.sh command).
-Once polling is up, continue Phase 2 of /orchestrate from wave $WAVE.
+Once polling is up, continue Phase 2 of /orc:dispatch from wave $WAVE.
 
 Next action recorded by previous orchestrator:
   $NEXT
@@ -52,13 +52,13 @@ EOF
     cat <<EOF
 === INVOKE codex:rescue WITH THIS PROMPT ===
 
-This is a RESUME of an in-flight /orchestrate run, not a fresh start.
+This is a RESUME of an in-flight /orc:dispatch run, not a fresh start.
 Repo root: $REPO_ROOT
 
 Read first:
   - $HANDOFF
   - $STATE
-  - ~/.claude/skills/orchestrate/SKILL.md (Phase 2 workflow)
+  - ~/.claude/plugins/marketplaces/athan-dial-skills/plugins/orc/skills/dispatch/SKILL.md (Phase 2 workflow)
 
 Then execute:
   cd "$REPO_ROOT" && bash ~/.claude/skills/orchestrate-handoff/scripts/resume.sh

@@ -1,17 +1,12 @@
 ---
-name: orchestrate
+name: dispatch
 description: >
-  Multi-agent orchestration — break complex work into parallel sub-tasks dispatched to Cursor,
-  Codex, or Claude subagents. Use when a task has multiple independent sub-parts that benefit
-  from parallel agent execution. Triggered by /orc:orchestrate, "orc orchestrate", /orchestrate,
-  /orchestrate path/to/plan.md, "orchestrate this", "execute this plan with agents",
-  "break this down and run it", "run these in parallel", "dispatch this work",
-  or any request with 2+ independent sub-parts.
-  Works with any markdown plan file, .orc/plans/ scoped plan, or freeform request.
-  Part of the orc system: orc:orchestrate, orc:backlog, orc:autoresearch, orc:status, orc:recap, orc:scope, orc:handoff.
+  Multi-agent dispatch — decompose a plan into dependency-ordered waves and run tasks in parallel
+  via Cursor, Codex, or Claude. Triggers: /orc:dispatch, "dispatch this", "run these in parallel".
+  Legacy alias: /orc:orchestrate.
 ---
 
-# Orc: Plan
+# Orc: Dispatch
 
 Framework-agnostic multi-agent orchestrator. Read a plan or freeform request, decompose into dependency-ordered tasks, dispatch to Codex/Cursor/Claude workers in parallel waves, poll, review, and advance — autonomously until complete.
 
@@ -121,6 +116,20 @@ Per wave:
 5. **Checkpoint** — see Checkpointing below
 6. Dispatch newly-unblocked tasks immediately
 
+### TaskNotes admin_state updates (edge-only bridge)
+
+If the plan has per-task `tasknotes_id` (preferred, produced by `orc:scope`), keep TaskNotes in sync:
+
+- At **wave start** (once per wave):
+  - PATCH all tasks in the wave to `admin_state: executing` (best-effort via Obsidian CLI `property:set`)
+  - Trigger Multica forward sweep once: `bash skills/sync/scripts/bridge-trigger.sh --forward`
+- At **wave end** (once per wave):
+  - For tasks that passed review: set `admin_state: completed`
+  - For tasks that failed and need human intervention: set `admin_state: waiting_human`
+  - Trigger Multica forward sweep once
+
+Do NOT trigger sweeps per task or per PATCH. The user chose edge-event bridging only.
+
 ### Checkpointing (handoff-resilient)
 
 After step 4 of every wave (review complete), call the `orchestrate-handoff` skill so a fresh agent can resume if CC hits a usage limit:
@@ -138,11 +147,13 @@ bash ~/.claude/skills/orchestrate-handoff/scripts/checkpoint.sh
 
 Writes `<repo>/.orc/{state.json,HANDOFF.md}`. Idempotent. If you sense a usage limit is imminent, run `prepare-handoff.sh cursor` or `prepare-handoff.sh codex` for a paste-ready resume prompt.
 
-## Phase 3: Complete
+## Phase 3: Complete → Verify (mandatory)
 
-1. Run verification commands from the plan (tests, lint, type-check) if specified
-2. Show final status table
-3. Summarize what was built/changed
+1. Show final status table
+2. Summarize what was built/changed
+3. Invoke `/orc:verify` (mandatory) using the plan reference:
+   - pass → TaskNotes done + reverse bridge + pattern write
+   - fail → gap plan + discovered tasks + forward bridge + offer to re-dispatch gaps
 
 ## Dispatch Commands
 

@@ -12,7 +12,8 @@ Auto-generated from `plugins/orc/commands/*.md` frontmatter.
 | `/orc:autoresearch` | '[metric or goal description]' | Autonomous optimization loop — iteratively improve a measurable codebase metric (coverage, latency, accuracy, test pass rate) |
 | `/orc:backlog` | '[add <text> \| list \| pick <id> \| triage \| <freeform>]' | Lightweight backlog for the orc system — capture, list, triage, pick, or promote ideas |
 | `/orc:handoff` | '[checkpoint \| resume \| <freeform note>]' | Persist and resume orc orchestration state to disk — checkpoint or hand off to a fresh session |
-| `/orc:orchestrate` | '[plan file path or freeform request]' | Multi-agent orchestration — break complex work into parallel sub-tasks dispatched to Cursor, Codex, or Claude subagents |
+| `/orc:dispatch` | '[plan file path or freeform request]' | Multi-agent dispatch — decompose into waves and run tasks in parallel across Cursor, Codex, or Claude |
+| `/orc:orchestrate` | '[plan file path or freeform request]' | Alias for `/orc:dispatch` (legacy name) |
 | `/orc:recap` | — | Session-start briefing from disk state — what happened last session, what's in the backlog, what to work on next |
 | `/orc:scope` | '[<backlog-id> \| <freeform description>]' | Shape a backlog item or freeform idea into a scoped plan file before executing |
 | `/orc:status` | — | Single-pane view of all orc system activity — active orchestration, autoresearch loops, backlog count, last commit |
