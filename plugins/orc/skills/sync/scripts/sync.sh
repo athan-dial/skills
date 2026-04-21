@@ -23,7 +23,12 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+FALLBACK_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+REPO_ROOT="${ORC_REPO_ROOT:-}"
+if [ -z "$REPO_ROOT" ]; then
+  REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "$FALLBACK_ROOT")"
+fi
 ORC_DIR="$REPO_ROOT/.orc"
 BACKLOG_DIR="$ORC_DIR/backlog"
 BACKLOG_JSONL="$BACKLOG_DIR/BACKLOG.jsonl"
@@ -167,10 +172,11 @@ PY
 }
 
 push() {
-  local tmp_out created
+  local tmp_out tmp_cnt created
   tmp_out="$(mktemp)"
+  tmp_cnt="$(mktemp)"
 
-  created="$(python3 - "$BACKLOG_JSONL" "$PROJECT_SLUG" "$DRY_RUN" >"$tmp_out" <<'PY'
+  python3 - "$BACKLOG_JSONL" "$PROJECT_SLUG" "$DRY_RUN" >"$tmp_out" 2>"$tmp_cnt" <<'PY'
 import datetime as dt
 import json, os, subprocess, sys, urllib.request
 
@@ -259,9 +265,10 @@ for line in open(backlog_path, encoding="utf-8"):
 for out in lines_out:
     sys.stdout.write(out + "\n")
 
-sys.stderr.write(str(created))
+print(created, file=sys.stderr, flush=True)
 PY
-  2>/dev/null || echo "0")"
+  created="$(tr -d ' \n' <"$tmp_cnt" || true)"
+  [ -n "$created" ] || created="0"
 
   if [ "$DRY_RUN" = "true" ]; then
     echo "[sync] DRY-RUN push: would create $created TaskNotes task(s) (backfilled missing tasknotes_id)" >&2
@@ -270,7 +277,7 @@ PY
     echo "[sync] push: created $created TaskNotes task(s) (backfilled missing tasknotes_id)" >&2
   fi
 
-  rm -f "$tmp_out" || true
+  rm -f "$tmp_out" "$tmp_cnt" || true
 
   if [ "$NO_BRIDGE" != "true" ] && [ "$DRY_RUN" != "true" ] && [ "${created:-0}" -gt 0 ]; then
     bash "$BRIDGE_TRIGGER" --forward || true
