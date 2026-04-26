@@ -12,7 +12,7 @@ SEARCH_ROOTS=(
   "$HOME/Github"
   "$HOME/code"
   "$HOME/projects"
-  "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents"
+  "$HOME/Github"
 )
 STATE_FILES=""
 for root in "${SEARCH_ROOTS[@]}"; do

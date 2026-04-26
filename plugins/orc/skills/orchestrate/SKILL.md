@@ -1,128 +1,37 @@
 ---
-name: dispatch
+name: orchestrate
 description: >
-  Multi-agent dispatch — execute an orc-plan/1 directory or decompose freeform input into
-  dependency-ordered waves, then run tasks in parallel via Cursor, Codex, or Claude.
-  Canonical input: a plan dir produced by /orc:plan at .orc/plans/SLUG/plan.yaml.
-  Soft-refuses freeform input: shows what an inferred plan would look like and offers to
-  hand off to /orc:plan instead.
-  Triggers: /orc:dispatch, /orc:dispatch SLUG, "dispatch this", "run these in parallel".
-  Legacy alias: /orc:orchestrate (uses freeform LLM-decompose path).
+  LEGACY orchestrator preserved from orc 0.5.0 for backward compatibility. Freeform
+  LLM-decomposition path with no structured-plan validation. Triggered only by explicit
+  /orc:orchestrate. Prefer /orc:dispatch (with /orc:plan upstream) for new flows —
+  orc:dispatch enforces orc-plan/1 schema, parallel HOME-isolated cursor agents, and
+  continuous merge. Works with any markdown plan file, .orc/plans/ scoped plan, or
+  freeform request. Part of the orc system: orc:plan, orc:dispatch, orc:orchestrate (this), orc:scope, orc:status, orc:handoff.
 ---
 
-# Orc: Dispatch
+# Orc: Plan
 
-Multi-agent executor. Two intake modes:
+Framework-agnostic multi-agent orchestrator. Read a plan or freeform request, decompose into dependency-ordered tasks, dispatch to Codex/Cursor/Claude workers in parallel waves, poll, review, and advance — autonomously until complete.
 
-**Structured (preferred):** Read an `orc-plan/1` directory at `.orc/plans/<slug>/`, validate it, then execute. No LLM decomposition at run time. Parallel tracks via HOME-isolated cursor-agents (zero config-write race).
-
-**Freeform (soft-refuse):** When given freeform input or a markdown plan, generate a *proposed* `orc-plan/1` manifest, print it, and offer three paths: (a) hand off to `/orc:plan` to grill it properly, (b) accept the guess with `--accept-guess`, or (c) abort.
-
-## Intake Routing
+## Workflow
 
 ```
-Input received
-  ├── slug → .orc/plans/<slug>/plan.yaml exists?  (orc:plan output)
-  │     ├── yes → Phase A: Validate → Phase B: Execute
-  │     └── no  → check .orc/plans/<slug>.md      (orc:scope output)
-  │            ├── yes → markdown plan path → SOFT REFUSE recommends /orc:plan
-  │            └── no  → SOFT REFUSE (no plan found)
-  ├── path to plan dir? → Phase A → Phase B
-  └── freeform / markdown plan?
-        └── infer manifest → SOFT REFUSE
+Input (plan file or freeform request)
+  → Decompose into tasks with dependencies
+  → Present table for user confirmation
+  → Wave-based execution (dispatch → poll → review → advance)
+  → Verification + summary
 ```
 
-**Slug resolution order** (when both `.orc/plans/<slug>/` and `.orc/plans/<slug>.md` exist):
-1. `<slug>/plan.yaml` (orc-plan/1 directory) — canonical structured form, wins.
-2. `<slug>.md` (legacy scope output) — markdown plan, treated as freeform → soft refuse path.
+## Autonomy Mode (default)
 
-The two never physically collide on POSIX (`<slug>/` is a directory, `<slug>.md` is a file with a different name) but the slug namespace is shared. If both exist, dispatch prints a one-line warning so the user knows the markdown is being shadowed by the structured plan.
+Once the user confirms the task table, operate autonomously to completion:
+- Dispatch all Wave 1 tasks immediately (all agents in parallel — Codex, Cursor, Claude subagents simultaneously)
+- Poll → review → dispatch Wave 2 without pausing
+- Only stop to ask if: a destructive op is needed (migration, force push), all retries on a task are exhausted, or a blocking ambiguity cannot be resolved from the codebase
+- On completion, present a single summary: what changed, what was skipped, any issues
 
-## Phase A: Validate Plan
-
-```bash
-bash skills/dispatch/scripts/validate-plan.sh .orc/plans/<slug>
-```
-
-Checks (refuses if any fail):
-
-- `format_version: orc-plan/1`
-- Slug matches `^[a-z][a-z0-9-]{0,39}$`
-- Every `prompt` path exists
-- Every PR has non-empty `expected_files`
-- **Within a single wave, no two tracks list the same file** (the largest source of merge pain — caught here it costs nothing)
-- Every `cursor_wt` is unique across the plan
-- At least one guard command is present
-
-On failure: print errors verbatim, refuse to dispatch, suggest re-running `/orc:plan`.
-
-## Phase B: Execute
-
-Per wave, in order:
-
-1. **Wave 0 (serial):** Dispatch shared shims one at a time via `cursor-task-iso.sh`. Each PR's worktree is named after its track-or-PR id. After each PR: verify diff, cherry-pick to main, advance.
-2. **Wave 1+ (parallel tracks):** Fire each track as a background process. Within a track: serial PRs. Across tracks: concurrent dispatches via per-track `cursor_wt`.
-
-### Per-PR loop (inside any track)
-
-```bash
-# 1. Dispatch
-CURSOR_WT="$track_wt" bash skills/dispatch/scripts/cursor-task-iso.sh "$(cat $prompt_file)"
-# (Returns job ID. Poll until done.)
-
-# 2. Verify diff
-WT_PATH=$(bash skills/dispatch/scripts/cursor-task-iso.sh --wt-path "$track_wt")
-bash skills/dispatch/scripts/verify-diff.sh "$WT_PATH" $expected_files
-#   exit 0 → ok
-#   exit 1 → empty diff (worker reported success without writing) — RETRY ONCE
-#   exit 2 → missing files — flag, do not auto-merge
-#   exit 3 → scope drift (touched out-of-scope files) — flag, do not auto-merge
-
-# 3. Continuous merge (only on verdict=ok)
-for f in $expected_files; do
-  cp "$WT_PATH/$f" "<repo>/$f"
-done
-cd <repo> && <run guard>
-git add $expected_files && git commit -m "<PR id>: <prompt-derived title>"
-
-# 4. Advance to next PR in track
-```
-
-### Continuous merge
-
-Cherry-pick each PR back to main *as it completes*, not at end-of-wave. Catches conflicts at PR-1 instead of at PR-22 — the "big-bang merge" mistake. If a guard command fails after a merge: revert the cherry-pick, mark the PR failed, continue the track.
-
-### Per-PR retry policy
-
-| verdict | action |
-|---|---|
-| ok | cherry-pick + advance |
-| empty | retry once with appended instruction "Your edits MUST be written to disk; do not just describe them." |
-| missing | flag, hand back to user |
-| drift | flag with diff-of-drift, hand back to user |
-
-## Soft Refuse (freeform input)
-
-When input is freeform (not a slug, not a plan dir):
-
-1. Read `.mex/ROUTER.md` + `CLAUDE.md` if present (Phase 0 routing — see below).
-2. Generate an inferred `plan.yaml` in memory using the orc-plan/1 schema.
-3. Print the proposed plan as a fenced YAML block.
-4. Use `AskUserQuestion`:
-   - **"Run /orc:plan to grill this properly"** (recommended) — exit, hand off.
-   - **"Accept this guess and dispatch (--accept-guess)"** — write the inferred plan to `.orc/plans/<inferred-slug>/`, then proceed to Phase A.
-   - **"Abort"** — exit cleanly.
-
-The default offer is `/orc:plan`. The point of the soft refuse is to make the structured-plan path obvious without forcing the user to redo work.
-
-## Phase 0: Route (auto — .mex-aware repos)
-
-**Runs BEFORE any planning subagent (Explore/Plan/researcher) is spawned.** Planning subagents inherit CLAUDE.md but do not automatically discover `.mex/` — they just Glob/Grep, and ripgrep skips `.mex/` if it's gitignored. If the orchestrator doesn't pre-read routing and inject it into every subagent prompt, planning proceeds blind to repo conventions and the resulting task decomposition is wrong.
-
-**Step 1 — Probe (single shell call, instant).**
-
-```bash
-for root in . ..; do
+**Do not** ask for permission between waves or report "starting wave 2" as a question — just do it.
 
 ## Phase 0: Route (auto — .mex-aware repos)
 
@@ -210,54 +119,25 @@ Per wave:
 5. **Checkpoint** — see Checkpointing below
 6. Dispatch newly-unblocked tasks immediately
 
-### TaskNotes admin_state updates (edge-only bridge)
-
-If the plan has per-task `tasknotes_id` (preferred, produced by `orc:scope`), keep TaskNotes in sync:
-
-- At **wave start** (once per wave):
-  - PATCH all tasks in the wave to `admin_state: executing` (best-effort via Obsidian CLI `property:set`)
-  - Trigger Multica forward sweep once: `bash skills/sync/scripts/bridge-trigger.sh --forward`
-- At **wave end** (once per wave):
-  - For tasks that passed review: set `admin_state: completed`
-  - For tasks that failed and need human intervention: set `admin_state: waiting_human`
-  - Trigger Multica forward sweep once
-
-Do NOT trigger sweeps per task or per PATCH. The user chose edge-event bridging only.
-
 ### Checkpointing (handoff-resilient — MANDATORY)
 
-After step 4 of every wave (review complete), call checkpoint.sh. **This is not optional.** With auto-detection (orc 0.6.1+), the call is one line and reads everything from disk:
+After step 4 of every wave (review complete), call checkpoint.sh. **One line, auto-detects everything from disk:**
 
 ```bash
 bash ~/.claude/plugins/cache/athan-dial-skills/orc/0.6.0/skills/handoff/scripts/checkpoint.sh
 ```
 
-Override only when you have richer context to record:
+Override env vars only when you have richer context to record (`ORCH_NEXT_ACTION`, `ORCH_NOTES`).
 
-```bash
-ORCH_NEXT_ACTION="Dispatch wave 3: tasks X, Y" \
-ORCH_NOTES="C2 rate-limited at 12:11; rerouted to Cursor" \
-bash ~/.claude/.../checkpoint.sh
-```
-
-Writes `<repo>/.orc/{state.json,HANDOFF.md}`. Idempotent. The script auto-detects:
-- `plan_ref`     ← latest `.orc/plans/<slug>/plan.yaml` mtime (fallback to `<slug>.md`)
-- `wave_status`  ← "running" if any cursor jobs alive, else "complete"
-- `inflight_jobs`← live `cursor-task-jobs/*.pid` files
-- `wave`         ← prior state.json's wave field
-- `git_head`     ← `git rev-parse --short HEAD`
-
-Plus the SessionEnd hook will re-checkpoint automatically when the session terminates (5h cap or otherwise), so even a forgotten manual call is recovered.
+Writes `<repo>/.orc/{state.json,HANDOFF.md}`. Idempotent. The SessionEnd hook also re-checkpoints automatically when the session terminates (5h cap or otherwise), so a forgotten manual call is still recovered.
 
 If a usage limit feels imminent, run `prepare-handoff.sh cursor` or `prepare-handoff.sh codex` for a paste-ready resume prompt.
 
-## Phase 3: Complete → Verify (mandatory)
+## Phase 3: Complete
 
-1. Show final status table
-2. Summarize what was built/changed
-3. Invoke `/orc:verify` (mandatory) using the plan reference:
-   - pass → TaskNotes done + reverse bridge + pattern write
-   - fail → gap plan + discovered tasks + forward bridge + offer to re-dispatch gaps
+1. Run verification commands from the plan (tests, lint, type-check) if specified
+2. Show final status table
+3. Summarize what was built/changed
 
 ## Dispatch Commands
 
@@ -281,31 +161,25 @@ $COMPANION task --resume-last --write "<follow-up>"
 
 **Parallelism:** Multiple Codex jobs can run simultaneously — the companion tracks all by job ID via `--all --json`. Dispatch up to 3 concurrent Codex jobs; beyond that, queue by dependency order.
 
-### Cursor (HOME-isolated — parallel-safe, structured-plan default)
-
-The canonical Cursor dispatcher for orc 0.6+ is `cursor-task-iso.sh`. It seeds a per-job `$HOME` so the standard `~/.cursor/cli-config.json` rename race never fires. **No 3-parallel cap** — concurrency is bounded only by API rate limits and local CPU/RAM.
+### Cursor (lighter tasks — single-file edits, config, migrations)
 
 ```bash
-CURSOR_ISO="$(find ~/.claude/plugins -name cursor-task-iso.sh 2>/dev/null | head -1)"
+CURSOR="$(command -v cursor-task 2>/dev/null || find ~/.claude/skills -name cursor-task.sh 2>/dev/null | head -1)"
 
-# Dispatch — CURSOR_WT must be unique per parallel job (worktree name)
-CURSOR_WT=track-projects bash $CURSOR_ISO "<prompt>"
+# Dispatch (returns job ID)
+bash $CURSOR "<prompt>"
 
 # Poll
-bash $CURSOR_ISO --status <job-id>
+bash $CURSOR --status <job-id>
 
 # Full result
-bash $CURSOR_ISO --result <job-id>
+bash $CURSOR --result <job-id>
 
-# Worktree path (for diff inspection / continuous merge)
-bash $CURSOR_ISO --wt-path <CURSOR_WT>
+# Continue/fix
+bash $CURSOR --continue "<follow-up>"
 ```
 
-The wrapper expects `~/.cursor/cli-config.json` and `~/.cursor/agent-cli-state.json` to exist (you've signed in once with `agent login`). It seeds a fresh tmp HOME for each job, copies those two files in, symlinks `~/Library` (for macOS Keychain access), then runs `agent -w $CURSOR_WT --worktree-base $CURSOR_WT_BASE`.
-
-**Legacy:** `cursor-task.sh` (without iso) is still around for backward compat; it caps at ~3 parallel due to the config race. Prefer `cursor-task-iso.sh` for any new orc:dispatch flow.
-
-**Concurrency:** Empirically validated 8/8 parallel with zero races (vs ~13% race rate with `agent -w` alone). Practical ceilings: Cursor API rate limit, local RAM (~300-500MB per agent process).
+**Constraint:** Max 3 parallel Cursor tasks.
 
 ### Claude direct (trivial — reads, commands, checks)
 

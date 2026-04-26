@@ -96,17 +96,6 @@ All three agent types support parallel execution. The goal is maximum concurrenc
 | Agent | Max Parallel | Queue Strategy | Pollable |
 |-------|-------------|----------------|----------|
 | Codex | 3 | Queue by dep order when >3 | Yes (JSON status API) |
-| Cursor (`cursor-task-iso.sh`) | N (HOME-isolated; ~8 validated, machine-bound) | One worktree per parallel job; no shared mutex | Yes (PID + log tail) |
-| Cursor (legacy `cursor-task.sh`) | 3 | Hits `~/.cursor/cli-config.json.tmp` race ≥4 parallel | Yes (PID + log tail) |
+| Cursor | 3 | Fill slots, queue overflow | Yes (PID + log tail) |
 | Claude direct | Unlimited | Run immediately | N/A (inline) |
 | Claude subagent | 3-5 | Use `run_in_background` for independence | Yes via `claude-bg` sentinel |
-
-**Per-track parallelism (orc:dispatch default):**
-- Each track owns a disjoint file set (per the plan's `expected_files`).
-- Within a track: serial dispatch (state evolves coherently in one worktree).
-- Across tracks: parallel dispatch (HOME-isolated, no race).
-
-**Per-PR verification (enforced by orc:dispatch):**
-- After each dispatch, diff actual changed files against `expected_files`.
-- Files outside the expected list → flag as scope drift.
-- Empty diff → retry once with appended "your edits MUST be written to disk" instruction.

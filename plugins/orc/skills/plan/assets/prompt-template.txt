@@ -1,0 +1,22 @@
+TASK: <one-line PR title>.
+
+Repo: <abs path to repo>. Read CLAUDE.md if present.
+
+CURRENT STATE (be specific):
+- <file or module to read first> — <why it's relevant>
+- <existing pattern to follow>
+
+GOAL: <single sentence — what changes>.
+
+DELIVERABLES:
+1. <action> <file path> — <what to add/modify>
+2. <action> <file path> — <what to add/modify>
+
+CONSTRAINTS:
+- Minimal focused diff. Do NOT commit.
+- Tokens / non-negotiables from CLAUDE.md.
+- <any scope exclusions: do not touch X>
+
+GUARD: <command to run before reporting done>
+
+Report: files changed + guard result.

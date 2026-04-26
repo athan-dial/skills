@@ -6,6 +6,29 @@ All notable changes to the `orc` plugin are documented here. Format follows [Kee
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-04-24
+
+### Added
+- `skills/plan/` — new `orc:plan` skill. Grill-me-style interview producing dispatch-ready `.orc/plans/<slug>/` directories in the new `orc-plan/1` format. Forces explicit per-PR file ownership at plan time so dispatch can refuse colliding waves before executing.
+- `skills/dispatch/scripts/cursor-task-iso.sh` — HOME-isolated cursor-agent dispatcher. Per-job throwaway `$HOME` (seeded with two small files + `~/Library` symlink) sidesteps the `~/.cursor/cli-config.json.tmp` rename race that capped legacy parallelism at ~3. Empirically validated 8/8 parallel with zero races.
+- `skills/dispatch/scripts/validate-plan.sh` — schema + invariants validator for `orc-plan/1`. Refuses plans where two tracks in the same wave list the same file in `expected_files` (the largest historical source of dispatch-time merge conflicts).
+- `skills/dispatch/scripts/verify-diff.sh` — per-PR diff verifier. Detects empty diff (worker reported success without writing) and scope drift (out-of-scope file edits).
+- `commands/plan.md` — invokes the new `plan` skill.
+- `skills/plan/references/format.md` + `skills/plan/assets/prompt-template.txt` — orc-plan/1 format reference + per-PR prompt skeleton.
+
+### Changed
+- **`orc:dispatch` is now structured-plan-first.** Canonical input is an `.orc/plans/<slug>/` directory; freeform input triggers a soft refuse: dispatch generates an inferred plan, prints it, and offers `/orc:plan` (recommended), `--accept-guess`, or abort.
+- **3-parallel-Cursor cap removed** when using `cursor-task-iso.sh`. Ceiling is now machine-bound (RAM/CPU) and API rate-limit-bound, not config-race-bound. Legacy `cursor-task.sh` retains the 3-parallel constraint.
+- `skills/dispatch/references/routing.md` concurrency table updated; per-track parallelism + per-PR verification rules documented.
+- `skills/dispatch/SKILL.md` — added Phase A (validate plan), Phase B (execute) with continuous-merge protocol; per-PR retry policy table; soft-refuse flow.
+
+### Deprecated
+- Legacy `cursor-task.sh` for new dispatches — keep for backward compat but prefer `cursor-task-iso.sh`.
+
+### Notes
+- `/orc:orchestrate` continues to alias `/orc:dispatch`.
+- No auto-fire from `/orc:plan` to `/orc:dispatch`. Plan prints the slug; user invokes dispatch when ready.
+
 ## [0.5.0] — 2026-04-16
 
 ### Added
